@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记一下</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: flex; justify-content: center; padding: 40px 16px; min-height: 100vh; }
+.app { width: 480px; max-width: 95vw; }
+h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 16px; }
+.top-bar { display: flex; gap: 5px; margin-bottom: 10px; }
+.top-bar input[type=text] { flex: 1; padding: 7px 10px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 14px; background: #fff; outline: none; min-width: 90px; }
+.top-bar input[type=text]:focus, .top-bar input[type=date]:focus, .top-bar select:focus { border-color: #b8a088; }
+.top-bar input[type=date] { padding: 7px 8px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 12px; background: #fff; outline: none; color: #5c4a3d; }
+.top-bar select { padding: 7px 6px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 12px; background: #fff; outline: none; color: #5c4a3d; cursor: pointer; }
+.top-bar button { padding: 7px 12px; background: #8b7355; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+.top-bar button:hover { background: #6b5a45; }
+.filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 14px; font-size: 13px; }
+.tabs span { cursor: pointer; color: #aaa; padding-bottom: 3px; }
+.tabs span.on { color: #8b7355; border-bottom: 2px solid #8b7355; }
+.cat-pills { display: flex; gap: 4px; margin-left: auto; }
+.cat-pill { font-size: 11px; padding: 3px 8px; border-radius: 10px; cursor: pointer; border: 1px solid #e0d5c5; background: #fff; color: #999; white-space: nowrap; }
+.cat-pill.on { background: #8b7355; color: #fff; border-color: #8b7355; }
+.date-group { margin-bottom: 14px; }
+.date-label { font-size: 12px; color: #b8a088; margin-bottom: 4px; padding-left: 2px; }
+.list { list-style: none; }
+.list li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #fff; border-radius: 4px; margin-bottom: 3px; border: 1px solid #ede6dd; font-size: 14px; }
+.list li.done .txt { text-decoration: line-through; color: #ccc; }
+.list li.done .cat-dot { opacity: .5; }
+.list li .txt { flex: 1; color: #4a4a4a; }
+.list li input[type=checkbox] { width: 16px; height: 16px; accent-color: #8b7355; cursor: pointer; }
+.cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.list li .del { background: none; border: none; color: #ddd; cursor: pointer; font-size: 16px; line-height: 1; }
+.list li .del:hover { color: #c0392b; }
+.empty { text-align: center; color: #ccc; padding: 40px 0; font-size: 14px; }
+.bottom { margin-top: 14px; font-size: 12px; color: #bbb; text-align: right; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <h1>📋 记一下 省的忘</h1>
+
+  <div class="top-bar">
+    <input type="text" id="inp" placeholder="要干嘛..." onkeydown="if(event.key==='Enter')add()">
+    <input type="date" id="dateInp">
+    <select id="catInp">
+      <option value="学习">📚 学习</option>
+      <option value="生活">🏠 生活</option>
+      <option value="工作">💼 工作</option>
+      <option value="其他">📌 其他</option>
+    </select>
+    <button onclick="add()">加</button>
+  </div>
+
+  <div class="filter-row">
+    <div class="tabs">
+      <span class="on" onclick="sw('all')">全部</span>
+      <span onclick="sw('todo')">没做完</span>
+      <span onclick="sw('done')">搞定了</span>
+    </div>
+    <div class="cat-pills" id="catPills">
+      <span class="cat-pill on" onclick="filterCat('')">全部类</span>
+      <span class="cat-pill" onclick="filterCat('学习')">学习</span>
+      <span class="cat-pill" onclick="filterCat('生活')">生活</span>
+      <span class="cat-pill" onclick="filterCat('工作')">工作</span>
+      <span class="cat-pill" onclick="filterCat('其他')">其他</span>
+    </div>
+  </div>
+
+  <div id="container"></div>
+  <div class="bottom" id="cnt"></div>
+
+</div>
+
+<script>
+// 类别颜色
+let catColors = { '学习': '#6b8e6b', '生活': '#c9a96e', '工作': '#7b8eaa', '其他': '#bbb' };
+
+let tasks = JSON.parse(localStorage.todo || '[]');
+let tab = 'all';
+let catFilter = '';
+
+document.getElementById('dateInp').value = new Date().toISOString().slice(0, 10);
+
+function add() {
+  let v = document.getElementById('inp').value.trim();
+  if (!v) return;
+  let d = document.getElementById('dateInp').value || new Date().toISOString().slice(0, 10);
+  let c = document.getElementById('catInp').value;
+  tasks.push({ id: Date.now(), text: v, done: false, date: d, cat: c });
+  document.getElementById('inp').value = '';
+  document.getElementById('dateInp').value = new Date().toISOString().slice(0, 10);
+  localStorage.todo = JSON.stringify(tasks);
+  render();
+}
+
+function toggle(id) {
+  tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+  localStorage.todo = JSON.stringify(tasks);
+  render();
+}
+
+function remove(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  localStorage.todo = JSON.stringify(tasks);
+  render();
+}
+
+function sw(t) {
+  tab = t;
+  document.querySelectorAll('.tabs span').forEach((s, i) => s.className = ['all','todo','done'][i] === t ? 'on' : '');
+  render();
+}
+
+function filterCat(c) {
+  catFilter = c;
+  document.querySelectorAll('.cat-pill').forEach(p => p.className = 'cat-pill' + (p.textContent === (c || '全部类') ? ' on' : ''));
+  render();
+}
+
+function prettyDate(d) {
+  let today = new Date().toISOString().slice(0, 10);
+  let tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  let yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (d === today) return '今天';
+  if (d === tomorrow) return '明天';
+  if (d === yesterday) return '昨天';
+  return d;
+}
+
+function render() {
+  // 先筛完成状态
+  let f = tab === 'all' ? tasks : tab === 'todo' ? tasks.filter(t => !t.done) : tasks.filter(t => t.done);
+  // 再筛分类
+  if (catFilter) f = f.filter(t => t.cat === catFilter);
+
+  let n = tasks.filter(t => !t.done).length;
+  let container = document.getElementById('container');
+
+  if (!f.length) {
+    container.innerHTML = '<div class="empty">空的，挺好的 🎉</div>';
+    document.getElementById('cnt').textContent = '';
+    return;
+  }
+
+  // 按日期分组
+  let groups = {};
+  for (let t of f) {
+    if (!groups[t.date]) groups[t.date] = [];
+    groups[t.date].push(t);
+  }
+  let dates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+  let html = '';
+  for (let date of dates) {
+    let items = groups[date].sort((a, b) => a.done ? 1 : -1);
+    html += `<div class="date-group">`;
+    html += `<div class="date-label">📅 ${prettyDate(date)} · ${items.length}条</div>`;
+    html += `<ul class="list">`;
+    for (let t of items) {
+      let color = catColors[t.cat] || '#bbb';
+      html += `<li class="${t.done ? 'done' : ''}">
+        <input type="checkbox" ${t.done ? 'checked' : ''} onclick="toggle(${t.id})">
+        <span class="cat-dot" style="background:${color}" title="${t.cat}"></span>
+        <span class="txt">${t.text.replace(/</g, '&lt;')}</span>
+        <button class="del" onclick="remove(${t.id})">×</button>
+      </li>`;
+    }
+    html += `</ul></div>`;
+  }
+
+  container.innerHTML = html;
+  document.getElementById('cnt').textContent = `还有${n}条没做 · ${dates.length}天`;
+}
+
+render();
+</script>
+</body>
+</html>

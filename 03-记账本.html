@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>花了多少</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: flex; justify-content: center; padding: 30px 16px; min-height: 100vh; }
+.app { width: 460px; max-width: 95vw; }
+h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 14px; }
+.balance { background: #5c4a3d; color: #fff; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 16px; }
+.balance .num { font-size: 34px; font-weight: bold; }
+.balance .sub { font-size: 12px; opacity: .7; margin-top: 2px; }
+.balance .row { display: flex; justify-content: space-around; margin-top: 12px; font-size: 13px; }
+.balance .row .in { color: #8fbc8f; }
+.balance .row .out { color: #e8a0a0; }
+.form { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.form input, .form select, .form button { padding: 7px 10px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 13px; background: #fff; outline: none; font-family: inherit; }
+.form input:focus, .form select:focus { border-color: #b8a088; }
+.form input { flex: 1; min-width: 80px; }
+.form select { min-width: 50px; }
+.form button { background: #8b7355; color: #fff; border: none; cursor: pointer; min-width: 40px; }
+.form button:hover { background: #6b5a45; }
+.filter { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
+.filter select { padding: 4px 8px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 13px; background: #fff; font-family: inherit; }
+.filter .sum { color: #999; }
+.list { list-style: none; }
+.list li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #fff; border-radius: 4px; margin-bottom: 3px; border: 1px solid #ede6dd; font-size: 13px; }
+.list li .icon { font-size: 18px; }
+.list li .desc { flex: 1; color: #4a4a4a; }
+.list li .date { color: #ccc; font-size: 11px; }
+.list li .money { font-weight: bold; }
+.list li .money.plus { color: #6b8e6b; }
+.list li .money.minus { color: #c0392b; }
+.list li .del { background: none; border: none; color: #ddd; cursor: pointer; font-size: 16px; }
+.list li .del:hover { color: #c0392b; }
+.empty { text-align: center; color: #ccc; padding: 40px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <h1>💰 花了多少</h1>
+
+  <div class="balance">
+    <div class="num" id="bal">¥0.00</div>
+    <div class="sub">余额</div>
+    <div class="row">
+      <span>收 <span class="in" id="in"></span></span>
+      <span>支 <span class="out" id="out"></span></span>
+    </div>
+  </div>
+
+  <div class="form">
+    <input type="text" id="desc" placeholder="买了啥（午饭、地铁...）">
+    <input type="number" id="amount" placeholder="金额" step="0.01" onkeydown="if(event.key==='Enter')add()">
+    <select id="type">
+      <option value="expense">花了</option>
+      <option value="income">收了</option>
+    </select>
+    <button onclick="add()">记</button>
+  </div>
+
+  <div class="filter">
+    <select id="mf" onchange="render()"></select>
+    <span class="sum" id="msum"></span>
+  </div>
+
+  <ul class="list" id="list"></ul>
+
+</div>
+
+<script>
+let records = JSON.parse(localStorage.cash || '[]');
+
+function add() {
+  let d = document.getElementById('desc').value.trim();
+  let a = parseFloat(document.getElementById('amount').value);
+  let t = document.getElementById('type').value;
+  if (!d || isNaN(a) || a <= 0) return;
+  records.push({ id: Date.now(), desc: d, amount: a, type: t, date: new Date().toISOString().slice(0,10) });
+  document.getElementById('desc').value = '';
+  document.getElementById('amount').value = '';
+  localStorage.cash = JSON.stringify(records);
+  render();
+}
+
+function remove(id) {
+  records = records.filter(r => r.id !== id);
+  localStorage.cash = JSON.stringify(records);
+  render();
+}
+
+function render() {
+  let months = [...new Set(records.map(r => r.date.slice(0,7)))].sort().reverse();
+  let now = new Date().toISOString().slice(0,7);
+  let mf = document.getElementById('mf');
+  mf.innerHTML = '<option value="">所有月份</option>' + months.map(m => `<option value="${m}" ${m===now?'selected':''}>${m}</option>`).join('');
+
+  let sel = mf.value;
+  let f = sel ? records.filter(r => r.date.startsWith(sel)) : records;
+  let inc = f.filter(r => r.type==='income').reduce((s,r) => s+r.amount, 0);
+  let exp = f.filter(r => r.type==='expense').reduce((s,r) => s+r.amount, 0);
+  let allInc = records.filter(r => r.type==='income').reduce((s,r) => s+r.amount, 0);
+  let allExp = records.filter(r => r.type==='expense').reduce((s,r) => s+r.amount, 0);
+
+  document.getElementById('bal').textContent = '¥' + (allInc - allExp).toFixed(2);
+  document.getElementById('in').textContent = '¥' + allInc.toFixed(2);
+  document.getElementById('out').textContent = '¥' + allExp.toFixed(2);
+  document.getElementById('msum').textContent = `当月 收¥${inc.toFixed(2)} 支¥${exp.toFixed(2)}`;
+
+  f.sort((a,b) => b.id - a.id);
+  let icons = ['🍔','🍜','🚌','🛒','📚','🎮','🏥','💻','🎁','🏠','💡','📱','☕','🎬','👕','✈️','🐱','🎵','📦','💊'];
+  let list = document.getElementById('list');
+  if (!f.length) {
+    list.innerHTML = '<div class="empty">还没记过账，开始吧 ✍️</div>';
+    return;
+  }
+  list.innerHTML = f.map(r => {
+    let ic = icons[r.desc.charCodeAt(0) % icons.length];
+    return `<li>
+      <span class="icon">${ic}</span>
+      <span class="desc">${r.desc.replace(/</g,'&lt;')}</span>
+      <span class="date">${r.date.slice(5)}</span>
+      <span class="money ${r.type==='income'?'plus':'minus'}">${r.type==='income'?'+':'-'}¥${r.amount.toFixed(2)}</span>
+      <button class="del" onclick="remove(${r.id})">×</button>
+    </li>`;
+  }).join('');
+}
+
+render();
+</script>
+</body>
+</html>

@@ -7,22 +7,43 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: flex; justify-content: center; padding: 40px 16px; min-height: 100vh; }
-.app { width: 480px; max-width: 95vw; }
-h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 16px; }
-.top-bar { display: flex; gap: 5px; margin-bottom: 10px; }
+.app { width: 500px; max-width: 95vw; }
+h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 14px; }
+.top-bar { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
 .top-bar input[type=text] { flex: 1; padding: 7px 10px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 14px; background: #fff; outline: none; min-width: 90px; }
-.top-bar input[type=text]:focus, .top-bar input[type=date]:focus, .top-bar select:focus { border-color: #b8a088; }
-.top-bar input[type=date] { padding: 7px 8px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 12px; background: #fff; outline: none; color: #5c4a3d; }
+.top-bar input:focus, .top-bar select:focus { border-color: #b8a088; }
+.top-bar input[type=date] { padding: 7px 6px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 12px; background: #fff; outline: none; color: #5c4a3d; }
 .top-bar select { padding: 7px 6px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 12px; background: #fff; outline: none; color: #5c4a3d; cursor: pointer; }
 .top-bar button { padding: 7px 12px; background: #8b7355; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; }
 .top-bar button:hover { background: #6b5a45; }
+.top-bar .small-btn { background: #fff; color: #8b7355; border: 1px solid #d5c8bc; padding: 7px 8px; font-size: 12px; }
+.top-bar .small-btn:hover { border-color: #8b7355; background: #fff; }
+.date-row { font-size: 12px; color: #999; margin-bottom: 10px; padding-left: 2px; }
 .filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
 .tabs { display: flex; gap: 14px; font-size: 13px; }
 .tabs span { cursor: pointer; color: #aaa; padding-bottom: 3px; }
 .tabs span.on { color: #8b7355; border-bottom: 2px solid #8b7355; }
-.cat-pills { display: flex; gap: 4px; margin-left: auto; }
-.cat-pill { font-size: 11px; padding: 3px 8px; border-radius: 10px; cursor: pointer; border: 1px solid #e0d5c5; background: #fff; color: #999; white-space: nowrap; }
+.cat-pills { display: flex; gap: 4px; flex-wrap: wrap; }
+.cat-pill { font-size: 11px; padding: 3px 8px; border-radius: 10px; cursor: pointer; border: 1px solid #e0d5c5; background: #fff; color: #999; white-space: nowrap; position: relative; }
 .cat-pill.on { background: #8b7355; color: #fff; border-color: #8b7355; }
+.cat-pill .close { margin-left: 3px; font-size: 10px; opacity: .6; }
+.cat-pill .close:hover { opacity: 1; color: #c0392b; }
+.modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.3); z-index: 9; justify-content: center; align-items: center; }
+.modal-bg.show { display: flex; }
+.modal { background: #fff; border-radius: 8px; padding: 24px; width: 320px; max-width: 90vw; box-shadow: 0 4px 20px rgba(0,0,0,.15); }
+.modal h3 { font-size: 16px; color: #5c4a3d; margin-bottom: 14px; }
+.modal input { width: 100%; padding: 8px 12px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 14px; outline: none; margin-bottom: 10px; }
+.modal input:focus { border-color: #b8a088; }
+.modal .mbtn { display: flex; gap: 8px; justify-content: flex-end; }
+.modal .mbtn button { padding: 7px 18px; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; }
+.modal .mbtn .ok { background: #8b7355; color: #fff; }
+.modal .mbtn .cancel { background: #eee; color: #666; }
+.modal .mbtn .ok:hover { background: #6b5a45; }
+.exist-list { margin-bottom: 12px; }
+.exist-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #f5f0eb; }
+.exist-item .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.exist-item .del-cat { background: none; border: none; color: #ddd; cursor: pointer; font-size: 14px; }
+.exist-item .del-cat:hover { color: #c0392b; }
 .date-group { margin-bottom: 14px; }
 .date-label { font-size: 12px; color: #b8a088; margin-bottom: 4px; padding-left: 2px; }
 .list { list-style: none; }
@@ -30,6 +51,7 @@ h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 16px; }
 .list li.done .txt { text-decoration: line-through; color: #ccc; }
 .list li.done .cat-dot { opacity: .5; }
 .list li .txt { flex: 1; color: #4a4a4a; }
+.list li .range { font-size: 11px; color: #bbb; margin-right: 4px; white-space: nowrap; }
 .list li input[type=checkbox] { width: 16px; height: 16px; accent-color: #8b7355; cursor: pointer; }
 .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .list li .del { background: none; border: none; color: #ddd; cursor: pointer; font-size: 16px; line-height: 1; }
@@ -45,15 +67,14 @@ h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 16px; }
 
   <div class="top-bar">
     <input type="text" id="inp" placeholder="要干嘛..." onkeydown="if(event.key==='Enter')add()">
-    <input type="date" id="dateInp">
-    <select id="catInp">
-      <option value="学习">📚 学习</option>
-      <option value="生活">🏠 生活</option>
-      <option value="工作">💼 工作</option>
-      <option value="其他">📌 其他</option>
-    </select>
+    <input type="date" id="dateStart" title="开始日期">
+    <span style="font-size:12px;color:#bbb;align-self:center;">~</span>
+    <input type="date" id="dateEnd" title="结束日期（可不填）">
+    <select id="catInp"></select>
+    <button class="small-btn" onclick="openCatMgr()" title="管理分类">+</button>
     <button onclick="add()">加</button>
   </div>
+  <div class="date-row" id="dateHint">结束日期不填等于和开始日期一样</div>
 
   <div class="filter-row">
     <div class="tabs">
@@ -63,10 +84,6 @@ h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 16px; }
     </div>
     <div class="cat-pills" id="catPills">
       <span class="cat-pill on" onclick="filterCat('')">全部类</span>
-      <span class="cat-pill" onclick="filterCat('学习')">学习</span>
-      <span class="cat-pill" onclick="filterCat('生活')">生活</span>
-      <span class="cat-pill" onclick="filterCat('工作')">工作</span>
-      <span class="cat-pill" onclick="filterCat('其他')">其他</span>
     </div>
   </div>
 
@@ -75,37 +92,124 @@ h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 16px; }
 
 </div>
 
-<script>
-// 类别颜色
-let catColors = { '学习': '#6b8e6b', '生活': '#c9a96e', '工作': '#7b8eaa', '其他': '#bbb' };
+<!-- 管理分类弹窗 -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeCatMgr()">
+  <div class="modal">
+    <h3>管理分类</h3>
+    <div class="exist-list" id="existList"></div>
+    <input type="text" id="newCatName" placeholder="新分类名（如：健身）" onkeydown="if(event.key==='Enter')addCat()">
+    <div class="mbtn">
+      <button class="cancel" onclick="closeCatMgr()">关</button>
+      <button class="ok" onclick="addCat()">添加</button>
+    </div>
+  </div>
+</div>
 
+<script>
+// ── 分类管理 ──
+let catColors = JSON.parse(localStorage.catColors || '{"学习":"#6b8e6b","生活":"#c9a96e","工作":"#7b8eaa","其他":"#bbb"}');
+let catOrder = JSON.parse(localStorage.catOrder || '["学习","生活","工作","其他"]');
 let tasks = JSON.parse(localStorage.todo || '[]');
 let tab = 'all';
 let catFilter = '';
 
-document.getElementById('dateInp').value = new Date().toISOString().slice(0, 10);
+// 随机颜色
+let spareColors = ['#e07b5a','#5a9e8f','#a07cc5','#d4a843','#5b8cc9','#c9607a','#6ea87a','#b8845c','#7b9ec7','#c98d5e'];
+
+function randomColor() {
+  return spareColors[Math.floor(Math.random() * spareColors.length)];
+}
+
+function saveAll() {
+  localStorage.catColors = JSON.stringify(catColors);
+  localStorage.catOrder = JSON.stringify(catOrder);
+  localStorage.todo = JSON.stringify(tasks);
+}
+
+function addCat() {
+  let name = document.getElementById('newCatName').value.trim();
+  if (!name) return;
+  if (catOrder.includes(name)) { document.getElementById('newCatName').value = ''; return; }
+  catOrder.push(name);
+  catColors[name] = randomColor();
+  document.getElementById('newCatName').value = '';
+  saveAll();
+  refreshCatUI();
+  openCatMgr(); // 刷新弹窗内容
+}
+
+function removeCat(name) {
+  if (['学习','生活','工作','其他'].includes(name)) return; // 四个默认分类不能删
+  catOrder = catOrder.filter(c => c !== name);
+  delete catColors[name];
+  // 把属于这个分类的事项移到"其他"
+  tasks = tasks.map(t => t.cat === name ? { ...t, cat: '其他' } : t);
+  if (catFilter === name) catFilter = '';
+  saveAll();
+  refreshCatUI();
+  render();
+  openCatMgr();
+}
+
+function openCatMgr() {
+  let list = document.getElementById('existList');
+  list.innerHTML = catOrder.map(c =>
+    `<div class="exist-item">
+      <span><span class="dot" style="background:${catColors[c]}"></span>${c}</span>
+      ${['学习','生活','工作','其他'].includes(c) ? '<span style="font-size:11px;color:#ccc;">默认</span>' : `<button class="del-cat" onclick="removeCat('${c}')">×</button>`}
+    </div>`
+  ).join('');
+  document.getElementById('newCatName').value = '';
+  document.getElementById('modalBg').classList.add('show');
+}
+
+function closeCatMgr() {
+  document.getElementById('modalBg').classList.remove('show');
+  refreshCatUI();
+  render();
+}
+
+function refreshCatUI() {
+  // 分类下拉
+  let sel = document.getElementById('catInp');
+  sel.innerHTML = catOrder.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  // 筛选药丸
+  let pills = document.getElementById('catPills');
+  pills.innerHTML = '<span class="cat-pill' + (catFilter === '' ? ' on' : '') + '" onclick="filterCat(\'\')">全部类</span>' +
+    catOrder.map(c => `<span class="cat-pill${catFilter === c ? ' on' : ''}" onclick="filterCat('${c}')">${c}</span>`).join('');
+}
+
+// ── 事项操作 ──
+document.getElementById('dateStart').value = new Date().toISOString().slice(0, 10);
+document.getElementById('dateEnd').value = '';
 
 function add() {
   let v = document.getElementById('inp').value.trim();
   if (!v) return;
-  let d = document.getElementById('dateInp').value || new Date().toISOString().slice(0, 10);
-  let c = document.getElementById('catInp').value;
-  tasks.push({ id: Date.now(), text: v, done: false, date: d, cat: c });
+  let ds = document.getElementById('dateStart').value || new Date().toISOString().slice(0, 10);
+  let de = document.getElementById('dateEnd').value || ds; // 不填则等于开始日期
+  // 确保结束不早于开始
+  if (de < ds) { let tmp = ds; ds = de; de = tmp; }
+  let c = document.getElementById('catInp').value || catOrder[0];
+  tasks.push({ id: Date.now(), text: v, done: false, dateStart: ds, dateEnd: de, cat: c });
   document.getElementById('inp').value = '';
-  document.getElementById('dateInp').value = new Date().toISOString().slice(0, 10);
-  localStorage.todo = JSON.stringify(tasks);
+  document.getElementById('dateStart').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('dateEnd').value = '';
+  saveAll();
   render();
+  document.getElementById('inp').focus();
 }
 
 function toggle(id) {
   tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
-  localStorage.todo = JSON.stringify(tasks);
+  saveAll();
   render();
 }
 
 function remove(id) {
   tasks = tasks.filter(t => t.id !== id);
-  localStorage.todo = JSON.stringify(tasks);
+  saveAll();
   render();
 }
 
@@ -117,7 +221,7 @@ function sw(t) {
 
 function filterCat(c) {
   catFilter = c;
-  document.querySelectorAll('.cat-pill').forEach(p => p.className = 'cat-pill' + (p.textContent === (c || '全部类') ? ' on' : ''));
+  refreshCatUI();
   render();
 }
 
@@ -131,10 +235,13 @@ function prettyDate(d) {
   return d;
 }
 
+function formatRange(ds, de) {
+  if (ds === de) return prettyDate(ds);
+  return prettyDate(ds) + ' ~ ' + prettyDate(de);
+}
+
 function render() {
-  // 先筛完成状态
   let f = tab === 'all' ? tasks : tab === 'todo' ? tasks.filter(t => !t.done) : tasks.filter(t => t.done);
-  // 再筛分类
   if (catFilter) f = f.filter(t => t.cat === catFilter);
 
   let n = tasks.filter(t => !t.done).length;
@@ -146,11 +253,12 @@ function render() {
     return;
   }
 
-  // 按日期分组
+  // 按开始日期分组
   let groups = {};
   for (let t of f) {
-    if (!groups[t.date]) groups[t.date] = [];
-    groups[t.date].push(t);
+    let key = t.dateStart;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(t);
   }
   let dates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 
@@ -162,10 +270,12 @@ function render() {
     html += `<ul class="list">`;
     for (let t of items) {
       let color = catColors[t.cat] || '#bbb';
+      let range = formatRange(t.dateStart, t.dateEnd);
       html += `<li class="${t.done ? 'done' : ''}">
         <input type="checkbox" ${t.done ? 'checked' : ''} onclick="toggle(${t.id})">
         <span class="cat-dot" style="background:${color}" title="${t.cat}"></span>
         <span class="txt">${t.text.replace(/</g, '&lt;')}</span>
+        <span class="range">${range}</span>
         <button class="del" onclick="remove(${t.id})">×</button>
       </li>`;
     }
@@ -176,6 +286,7 @@ function render() {
   document.getElementById('cnt').textContent = `还有${n}条没做 · ${dates.length}天`;
 }
 
+refreshCatUI();
 render();
 </script>
 </body>

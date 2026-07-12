@@ -307,9 +307,9 @@ body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: fl
     <h3>添加事项</h3>
     <div class="row"><label>内容</label><input type="text" id="inp" placeholder="要干嘛..." onkeydown="if(event.key==='Enter')add()"></div>
     <div class="row"><label>分类</label><select id="catInp"></select><button onclick="openCatMgr()" style="background:#fff;color:#8b7355;border:1px solid #d5c8bc;padding:8px 10px;border-radius:4px;cursor:pointer;font-size:13px;">管</button></div>
-    <div class="row"><label>开始</label><input type="date" id="dateStart"><input type="time" id="timeStart"></div>
-    <div class="row"><label>结束</label><input type="date" id="dateEnd"><input type="time" id="timeEnd"></div>
-    <div class="hint">时间不填 = 全天 · 结束不填 = 同一天</div>
+    <div class="row"><label>开始</label><select id="sy"></select><span style="font-size:11px;color:#bbb;">年</span><select id="smo"></select><span style="font-size:11px;color:#bbb;">月</span><select id="sd"></select><span style="font-size:11px;color:#bbb;">日</span><select id="sh"><option value="">时</option></select><span style="font-size:12px;color:#bbb;">:</span><select id="sm"><option value="">分</option></select></div>
+    <div class="row"><label>结束</label><select id="ey"></select><span style="font-size:11px;color:#bbb;">年</span><select id="emo"></select><span style="font-size:11px;color:#bbb;">月</span><select id="ed"></select><span style="font-size:11px;color:#bbb;">日</span><select id="eh"><option value="">时</option></select><span style="font-size:12px;color:#bbb;">:</span><select id="em"><option value="">分</option></select></div>
+    <div class="hint">时/分不选 = 全天 · 结束不填 = 同一天</div>
     <div class="row"><label>重复</label><select id="repeatMode" onchange="toggleRepeat()"><option value="0">不重复</option><option value="1">每 N 天</option><option value="7">每周</option><option value="30">每月</option></select><input type="number" id="repeatDays" value="3" min="1" max="365" style="width:55px;display:none;" placeholder="天"></div>
     <div class="btns"><button class="cancel" onclick="closeAdd()">取消</button><button class="ok" onclick="add()">添加</button></div>
   </div>
@@ -350,9 +350,9 @@ body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: fl
     <h3>修改事项</h3>
     <div class="row"><label>内容</label><input type="text" id="editInp" onkeydown="if(event.key==='Enter')saveEdit()"></div>
     <div class="row"><label>分类</label><select id="editCat"></select></div>
-    <div class="row"><label>开始</label><input type="date" id="editDateStart"><input type="time" id="editTimeStart"></div>
-    <div class="row"><label>结束</label><input type="date" id="editDateEnd"><input type="time" id="editTimeEnd"></div>
-    <div class="hint">时间不填 = 全天 · 结束不填 = 同一天</div>
+    <div class="row"><label>开始</label><select id="esy"></select><span style="font-size:11px;color:#bbb;">年</span><select id="esmo"></select><span style="font-size:11px;color:#bbb;">月</span><select id="esd"></select><span style="font-size:11px;color:#bbb;">日</span><select id="esh"><option value="">时</option></select><span style="font-size:12px;color:#bbb;">:</span><select id="esm"><option value="">分</option></select></div>
+    <div class="row"><label>结束</label><select id="eey"></select><span style="font-size:11px;color:#bbb;">年</span><select id="eemo"></select><span style="font-size:11px;color:#bbb;">月</span><select id="eed"></select><span style="font-size:11px;color:#bbb;">日</span><select id="eeh"><option value="">时</option></select><span style="font-size:12px;color:#bbb;">:</span><select id="eem"><option value="">分</option></select></div>
+    <div class="hint">时/分不选 = 全天 · 结束不填 = 同一天</div>
     <div class="row"><label>重复</label><select id="editRepeatMode" onchange="toggleEditRepeat()"><option value="0">不重复</option><option value="1">每 N 天</option><option value="7">每周</option><option value="30">每月</option></select><input type="number" id="editRepeatDays" min="1" max="365" style="width:55px;display:none;" placeholder="天"></div>
     <div class="btns"><button class="cancel" onclick="closeEdit()">取消</button><button class="ok" onclick="saveEdit()">保存</button></div>
   </div>
@@ -437,8 +437,96 @@ function updateCatBtn() {
 
 function refreshUI() {
   updateCatBtn();
-  // 添加弹窗的分类下拉
   document.getElementById('catInp').innerHTML = catOrder.map(c => `<option value="${c}">${c}</option>`).join('');
+  // 填充时间下拉
+  buildTimeSelects();
+}
+
+function buildTimeSelects() {
+  let hourOpts = '<option value="">时</option>';
+  for (let i = 0; i < 24; i++) hourOpts += `<option value="${String(i).padStart(2,'0')}">${i}</option>`;
+  let minOpts = '<option value="">分</option>';
+  for (let i = 0; i < 60; i += 5) minOpts += `<option value="${String(i).padStart(2,'0')}">${i}</option>`;
+  ['sh','sm','eh','em','esh','esm','eeh','eem'].forEach(id => {
+    let el = document.getElementById(id);
+    if (el) el.innerHTML = id.endsWith('h') ? hourOpts : minOpts;
+  });
+  buildDateSelects();
+}
+
+function buildDateSelects() {
+  let now = new Date();
+  let y = now.getFullYear();
+  let yOpts = '';
+  for (let i = y - 1; i <= y + 5; i++) yOpts += `<option value="${i}">${i}</option>`;
+  let mOpts = '';
+  for (let i = 1; i <= 12; i++) mOpts += `<option value="${String(i).padStart(2,'0')}">${i}</option>`;
+
+  ['sy','smo','ey','emo','esy','esmo','eey','eemo'].forEach(id => {
+    let el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = id.endsWith('y') ? yOpts : mOpts;
+  });
+  ['sd','ed','esd','eed'].forEach(id => updateDaySelect(id));
+}
+
+function updateDaySelect(dayId) {
+  let prefix = dayId.replace('d','');
+  let yEl = document.getElementById(prefix + 'y');
+  let mEl = document.getElementById(prefix + 'mo');
+  if (!yEl || !mEl) return;
+  let y = parseInt(yEl.value) || new Date().getFullYear();
+  let m = parseInt(mEl.value) || 1;
+  let days = new Date(y, m, 0).getDate();
+  let el = document.getElementById(dayId);
+  let cur = el ? el.value : '';
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = 1; i <= days; i++) {
+    let v = String(i).padStart(2,'0');
+    el.innerHTML += `<option value="${v}" ${v===cur?'selected':''}>${i}</option>`;
+  }
+}
+
+// 月份变化时刷新日数
+['smo','emo','esmo','eemo'].forEach(id => {
+  let el = document.getElementById(id);
+  if (el) el.setAttribute('onchange', `updateDaySelect('${id.replace('mo','d')}')`);
+});
+
+function readDate(yId, mId, dId) {
+  let y = document.getElementById(yId).value;
+  let m = document.getElementById(mId).value;
+  let d = document.getElementById(dId).value;
+  if (!y || !m || !d) return '';
+  return y + '-' + m + '-' + d;
+}
+
+function setDate(yId, mId, dId, dateStr) {
+  if (!dateStr) return;
+  let [y, m, d] = dateStr.split('-');
+  let ye = document.getElementById(yId);
+  let me = document.getElementById(mId);
+  let de = document.getElementById(dId);
+  if (ye && y) ye.value = y;
+  if (me && m) { me.value = m; updateDaySelect(dId); }
+  if (de && d) de.value = d;
+}
+
+function readTime(hId, mId) {
+  let h = document.getElementById(hId).value;
+  let m = document.getElementById(mId).value;
+  if (!h && !m) return '';
+  return (h || '00') + ':' + (m || '00');
+}
+
+function setTime(hId, mId, timeStr) {
+  let elH = document.getElementById(hId);
+  let elM = document.getElementById(mId);
+  if (!timeStr) { elH.value = ''; elM.value = ''; return; }
+  let [h, m] = timeStr.split(':');
+  elH.value = h;
+  elM.value = m && m !== '00' ? m : '';
 }
 
 // ── 事项是否可见 ──
@@ -512,10 +600,11 @@ function openEditFromMgr(id) {
 
 // ── 添加 ──
 function openAdd() {
-  document.getElementById('dateStart').value = selectedDate || new Date().toISOString().slice(0, 10);
-  document.getElementById('dateEnd').value = '';
-  document.getElementById('timeStart').value = '';
-  document.getElementById('timeEnd').value = '';
+  let def = selectedDate || new Date().toISOString().slice(0, 10);
+  setDate('sy','smo','sd', def);
+  setDate('ey','emo','ed', '');
+  setTime('sh','sm','');
+  setTime('eh','em','');
   document.getElementById('inp').value = '';
   document.getElementById('addModalBg').classList.add('show');
   setTimeout(() => document.getElementById('inp').focus(), 200);
@@ -536,10 +625,10 @@ function toggleEditRepeat() {
 function add() {
   let v = document.getElementById('inp').value.trim();
   if (!v) return;
-  let ds = document.getElementById('dateStart').value || new Date().toISOString().slice(0, 10);
-  let de = document.getElementById('dateEnd').value || ds;
-  let ts = document.getElementById('timeStart').value;
-  let te = document.getElementById('timeEnd').value;
+  let ds = readDate('sy','smo','sd') || new Date().toISOString().slice(0, 10);
+  let de = readDate('ey','emo','ed') || ds;
+  let ts = readTime('sh','sm');
+  let te = readTime('eh','em');
   if (de < ds) { let tmp = ds; ds = de; de = tmp; ts = te; te = ts; }
   let rd = parseInt(document.getElementById('repeatDays').value) || 0;
   if (document.getElementById('repeatMode').value === '0') rd = 0;
@@ -609,10 +698,10 @@ function openEditTask() {
   if (!t) return;
   menuTaskId = id; // 重新设回去给 saveEdit 用
   document.getElementById('editInp').value = t.text;
-  document.getElementById('editDateStart').value = t.dateStart;
-  document.getElementById('editDateEnd').value = t.dateEnd === t.dateStart ? '' : t.dateEnd;
-  document.getElementById('editTimeStart').value = t.timeStart || '';
-  document.getElementById('editTimeEnd').value = t.timeEnd || '';
+  setDate('esy','esmo','esd', t.dateStart);
+  setDate('eey','eemo','eed', t.dateEnd === t.dateStart ? '' : t.dateEnd);
+  setTime('esh','esm', t.timeStart);
+  setTime('eeh','eem', t.timeEnd);
   document.getElementById('editCat').innerHTML = catOrder.map(c => `<option value="${c}" ${c === t.cat ? 'selected' : ''}>${c}</option>`).join('');
   // 重复设置
   let rd = t.repeatDays || 0;
@@ -628,10 +717,10 @@ function saveEdit() {
   if (id === null) return;
   let v = document.getElementById('editInp').value.trim();
   if (!v) return;
-  let ds = document.getElementById('editDateStart').value;
-  let de = document.getElementById('editDateEnd').value || ds;
-  let ts = document.getElementById('editTimeStart').value;
-  let te = document.getElementById('editTimeEnd').value;
+  let ds = readDate('esy','esmo','esd');
+  let de = readDate('eey','eemo','eed') || ds;
+  let ts = readTime('esh','esm');
+  let te = readTime('eeh','eem');
   if (de < ds) { let tmp = ds; ds = de; de = tmp; ts = te; te = ts; }
   let c = document.getElementById('editCat').value;
   let erd = parseInt(document.getElementById('editRepeatDays').value) || 0;
@@ -642,6 +731,7 @@ function saveEdit() {
 
 function refreshViews() {
   if (document.getElementById('dayView').classList.contains('active')) openDayView(selectedDate);
+  else if (document.getElementById('mgrView').classList.contains('active')) renderManager();
   else renderCalendar();
 }
 

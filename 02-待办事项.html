@@ -20,8 +20,24 @@ window.addEventListener('beforeinstallprompt', e => {
 
 // 如果已安装或非Chrome内核，也显示按钮作为兜底
 window.addEventListener('load', () => {
-  if (!deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
-    document.getElementById('installBtn').style.display = 'flex';
+  if (!window.matchMedia('(display-mode: standalone)').matches) {
+    if (!deferredPrompt) document.getElementById('installBtn').style.display = 'flex';
+
+    // 安装提示横幅
+    let ua = navigator.userAgent;
+    let tip = '';
+    if (ua.includes('iPhone') || ua.includes('iPad')) tip = '点 Safari 底部 <b>分享</b> → <b>添加到主屏幕</b>';
+    else if (ua.includes('Android')) tip = '点左上角 ⬇️ 或选浏览器菜单 → <b>安装应用</b>';
+    else tip = '点左上角 ⬇️ → 安装为桌面应用';
+
+    let bar = document.createElement('div');
+    bar.id = 'installTip';
+    bar.innerHTML = `<span>${tip}</span><span onclick="this.parentElement.remove()" style="cursor:pointer;margin-left:8px;font-size:16px;">✕</span>`;
+    bar.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:50;background:#5c4a3d;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;max-width:90vw;text-align:center;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(0,0,0,.2);';
+    document.body.appendChild(bar);
+
+    // 5秒后自动消失
+    setTimeout(() => { let t = document.getElementById('installTip'); if (t) t.remove(); }, 8000);
   }
 });
 
@@ -294,6 +310,7 @@ body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: fl
     <div class="row"><label>开始</label><input type="date" id="dateStart"><input type="time" id="timeStart"></div>
     <div class="row"><label>结束</label><input type="date" id="dateEnd"><input type="time" id="timeEnd"></div>
     <div class="hint">时间不填 = 全天 · 结束不填 = 同一天</div>
+    <div class="row"><label>重复</label><select id="repeatMode" onchange="toggleRepeat()"><option value="0">不重复</option><option value="1">每 N 天</option><option value="7">每周</option><option value="30">每月</option></select><input type="number" id="repeatDays" value="3" min="1" max="365" style="width:55px;display:none;" placeholder="天"></div>
     <div class="btns"><button class="cancel" onclick="closeAdd()">取消</button><button class="ok" onclick="add()">添加</button></div>
   </div>
 </div>
@@ -336,6 +353,7 @@ body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: fl
     <div class="row"><label>开始</label><input type="date" id="editDateStart"><input type="time" id="editTimeStart"></div>
     <div class="row"><label>结束</label><input type="date" id="editDateEnd"><input type="time" id="editTimeEnd"></div>
     <div class="hint">时间不填 = 全天 · 结束不填 = 同一天</div>
+    <div class="row"><label>重复</label><select id="editRepeatMode" onchange="toggleEditRepeat()"><option value="0">不重复</option><option value="1">每 N 天</option><option value="7">每周</option><option value="30">每月</option></select><input type="number" id="editRepeatDays" min="1" max="365" style="width:55px;display:none;" placeholder="天"></div>
     <div class="btns"><button class="cancel" onclick="closeEdit()">取消</button><button class="ok" onclick="saveEdit()">保存</button></div>
   </div>
 </div>
@@ -504,6 +522,17 @@ function openAdd() {
 }
 function closeAdd() { document.getElementById('addModalBg').classList.remove('show'); }
 
+function toggleRepeat() {
+  let m = document.getElementById('repeatMode').value;
+  document.getElementById('repeatDays').style.display = m === '1' ? '' : 'none';
+  if (m !== '1') document.getElementById('repeatDays').value = m;
+}
+function toggleEditRepeat() {
+  let m = document.getElementById('editRepeatMode').value;
+  document.getElementById('editRepeatDays').style.display = m === '1' ? '' : 'none';
+  if (m !== '1') document.getElementById('editRepeatDays').value = m;
+}
+
 function add() {
   let v = document.getElementById('inp').value.trim();
   if (!v) return;
@@ -512,13 +541,35 @@ function add() {
   let ts = document.getElementById('timeStart').value;
   let te = document.getElementById('timeEnd').value;
   if (de < ds) { let tmp = ds; ds = de; de = tmp; ts = te; te = ts; }
-  tasks.push({ id: Date.now(), text: v, done: false, dateStart: ds, dateEnd: de, timeStart: ts, timeEnd: te, cat: document.getElementById('catInp').value || catOrder[0] });
+  let rd = parseInt(document.getElementById('repeatDays').value) || 0;
+  if (document.getElementById('repeatMode').value === '0') rd = 0;
+  tasks.push({ id: Date.now(), text: v, done: false, dateStart: ds, dateEnd: de, timeStart: ts, timeEnd: te, cat: document.getElementById('catInp').value || catOrder[0], repeatDays: rd });
   saveAll(); closeAdd();
   if (document.getElementById('dayView').classList.contains('active')) openDayView(selectedDate);
   else renderCalendar();
 }
 
-function toggle(id) { tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t); saveAll(); refreshViews(); }
+function toggle(id) {
+  let t = tasks.find(t => t.id === id);
+  if (!t) return;
+  let wasDone = t.done;
+  tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+  // 周期性任务：被标记完成时自动生成下一个
+  if (!wasDone && t.repeatDays > 0) {
+    let nextStart = new Date(t.dateStart);
+    nextStart.setDate(nextStart.getDate() + t.repeatDays);
+    let nextEnd = new Date(t.dateEnd);
+    nextEnd.setDate(nextEnd.getDate() + t.repeatDays);
+    tasks.push({
+      id: Date.now(), text: t.text, done: false,
+      dateStart: nextStart.toISOString().slice(0,10),
+      dateEnd: nextEnd.toISOString().slice(0,10),
+      timeStart: t.timeStart, timeEnd: t.timeEnd,
+      cat: t.cat, repeatDays: t.repeatDays
+    });
+  }
+  saveAll(); refreshViews();
+}
 function remove(id) { tasks = tasks.filter(t => t.id !== id); saveAll(); refreshViews(); }
 
 // ── 色条操作菜单 ──
@@ -563,6 +614,12 @@ function openEditTask() {
   document.getElementById('editTimeStart').value = t.timeStart || '';
   document.getElementById('editTimeEnd').value = t.timeEnd || '';
   document.getElementById('editCat').innerHTML = catOrder.map(c => `<option value="${c}" ${c === t.cat ? 'selected' : ''}>${c}</option>`).join('');
+  // 重复设置
+  let rd = t.repeatDays || 0;
+  if (rd === 7) { document.getElementById('editRepeatMode').value = '7'; document.getElementById('editRepeatDays').style.display = 'none'; }
+  else if (rd === 30) { document.getElementById('editRepeatMode').value = '30'; document.getElementById('editRepeatDays').style.display = 'none'; }
+  else if (rd > 0) { document.getElementById('editRepeatMode').value = '1'; document.getElementById('editRepeatDays').style.display = ''; document.getElementById('editRepeatDays').value = rd; }
+  else { document.getElementById('editRepeatMode').value = '0'; document.getElementById('editRepeatDays').style.display = 'none'; }
   document.getElementById('editModalBg').classList.add('show');
 }
 function closeEdit() { document.getElementById('editModalBg').classList.remove('show'); menuTaskId = null; }
@@ -577,7 +634,9 @@ function saveEdit() {
   let te = document.getElementById('editTimeEnd').value;
   if (de < ds) { let tmp = ds; ds = de; de = tmp; ts = te; te = ts; }
   let c = document.getElementById('editCat').value;
-  tasks = tasks.map(t => t.id === id ? { ...t, text: v, dateStart: ds, dateEnd: de, timeStart: ts, timeEnd: te, cat: c } : t);
+  let erd = parseInt(document.getElementById('editRepeatDays').value) || 0;
+  if (document.getElementById('editRepeatMode').value === '0') erd = 0;
+  tasks = tasks.map(t => t.id === id ? { ...t, text: v, dateStart: ds, dateEnd: de, timeStart: ts, timeEnd: te, cat: c, repeatDays: erd } : t);
   saveAll(); closeEdit(); refreshViews();
 }
 
@@ -679,7 +738,7 @@ function renderCalendar() {
       if (diffMin < 60) dl = diffMin + '分钟后';
       else if (diffMin < 1440) dl = Math.round(diffMin / 60) + '小时后';
       else dl = t.dateEnd === today ? '今天' + (t.timeEnd ? ' ' + t.timeEnd : '') : t.dateEnd.slice(5);
-      return `<div class="up-item">
+      return `<div class="up-item" style="cursor:pointer;" onclick="event.stopPropagation();openTaskMenu(event,${t.id})">
         <span class="up-date">${dl}</span>
         <span class="up-text">${t.text.replace(/</g,'&lt;')}</span>
         <span class="up-cat">${t.cat}</span>
@@ -737,7 +796,8 @@ function openDayView(dateStr) {
     adHtml = '<div class="all-day-label">全天' + (multiDay.length > 0 ? ' · 跨天' : '') + '</div>' +
       allDay.map(t => {
         let range = (t.dateStart !== t.dateEnd) ? ` ${t.dateStart.slice(5)}~${t.dateEnd.slice(5)}` : '';
-        return `<span class="all-day-item" style="border-color:${catColors[t.cat]};color:${catColors[t.cat]};" onclick="event.stopPropagation();openTaskMenu(event,${t.id})">${t.text.replace(/</g,'&lt;')}${range}${t.done?' ✓':''}</span>`;
+        let rpt = t.repeatDays > 0 ? ' ↻' : '';
+        return `<span class="all-day-item" style="border-color:${catColors[t.cat]};color:${catColors[t.cat]};" onclick="event.stopPropagation();openTaskMenu(event,${t.id})">${t.text.replace(/</g,'&lt;')}${range}${rpt}${t.done?' ✓':''}</span>`;
       }).join('');
   }
   document.getElementById('allDayBlock').innerHTML = adHtml;
@@ -800,7 +860,7 @@ function openDayView(dateStr) {
       let color = catColors[b.task.cat] || '#bbb';
       let tStr = prettyTime(b.task.timeStart) + (b.task.timeEnd && b.task.timeEnd !== b.task.timeStart ? '-' + prettyTime(b.task.timeEnd) : '');
       overlay += `<div class="task-block" style="background:${color};top:${topPx}px;height:${heightPx}px;left:${left}%;width:${width}%;" onclick="event.stopPropagation();openTaskMenu(event,${b.task.id})">
-        <span class="tb-title">${b.task.text.replace(/</g,'&lt;')}${b.task.done?' ✓':''}</span>
+        <span class="tb-title">${b.task.text.replace(/</g,'&lt;')}${b.task.repeatDays>0?' ↻':''}${b.task.done?' ✓':''}</span>
         <span class="tb-time">${tStr}</span>
       </div>`;
     }

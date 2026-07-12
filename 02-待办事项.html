@@ -17,10 +17,24 @@ window.addEventListener('beforeinstallprompt', e => {
   deferredPrompt = e;
   document.getElementById('installBtn').style.display = 'flex';
 });
+
+// 如果已安装或非Chrome内核，也显示按钮作为兜底
+window.addEventListener('load', () => {
+  if (!deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+    document.getElementById('installBtn').style.display = 'flex';
+  }
+});
+
 function installApp() {
-  if (!deferredPrompt) { alert('点浏览器右上角菜单 → 安装'); return; }
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(() => { deferredPrompt = null; document.getElementById('installBtn').style.display = 'none'; });
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  } else if (navigator.userAgent.includes('Edg') || navigator.userAgent.includes('Chrome')) {
+    alert('点浏览器右上角 ⋯ 菜单 → 应用 → 安装此站点作为应用');
+  } else {
+    alert('iOS：点底部分享按钮 → 添加到主屏幕\n安卓：点浏览器菜单 → 安装应用');
+  }
+  document.getElementById('installBtn').style.display = 'none';
 }
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/my-tools/sw.js');

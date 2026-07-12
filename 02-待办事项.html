@@ -6,301 +6,813 @@
 <title>记一下</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: flex; justify-content: center; padding: 40px 16px; min-height: 100vh; }
-.app { width: 520px; max-width: 95vw; }
-h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 14px; }
-.top-bar { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
-.top-bar input[type=text] { flex: 1; padding: 7px 10px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 14px; background: #fff; outline: none; min-width: 90px; }
-.top-bar input:focus, .top-bar select:focus { border-color: #b8a088; }
-.top-bar input[type=date] { padding: 7px 4px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 11px; background: #fff; outline: none; color: #5c4a3d; }
-.top-bar input[type=time] { padding: 7px 2px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 11px; background: #fff; outline: none; color: #5c4a3d; width: 55px; }
-.top-bar select { padding: 7px 6px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 12px; background: #fff; outline: none; color: #5c4a3d; cursor: pointer; }
-.top-bar button { padding: 7px 12px; background: #8b7355; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; }
-.top-bar button:hover { background: #6b5a45; }
-.top-bar .small-btn { background: #fff; color: #8b7355; border: 1px solid #d5c8bc; padding: 7px 8px; font-size: 12px; }
-.top-bar .small-btn:hover { border-color: #8b7355; background: #fff; }
-.date-row { font-size: 11px; color: #bbb; margin-bottom: 10px; padding-left: 2px; }
-.filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-.tabs { display: flex; gap: 14px; font-size: 13px; }
-.tabs span { cursor: pointer; color: #aaa; padding-bottom: 3px; }
-.tabs span.on { color: #8b7355; border-bottom: 2px solid #8b7355; }
-.cat-pills { display: flex; gap: 4px; flex-wrap: wrap; }
-.cat-pill { font-size: 11px; padding: 3px 8px; border-radius: 10px; cursor: pointer; border: 1px solid #e0d5c5; background: #fff; color: #999; white-space: nowrap; position: relative; }
-.cat-pill.on { background: #8b7355; color: #fff; border-color: #8b7355; }
-.cat-pill .close { margin-left: 3px; font-size: 10px; opacity: .6; }
-.cat-pill .close:hover { opacity: 1; color: #c0392b; }
-.modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.3); z-index: 9; justify-content: center; align-items: center; }
+body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: flex; justify-content: center; padding: 30px 16px 100px; min-height: 100vh; }
+.app { width: 420px; max-width: 95vw; }
+
+/* 顶栏 */
+.top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.top h1 { font-size: 20px; color: #5c4a3d; }
+.mon-nav { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #5c4a3d; font-weight: bold; }
+.mon-nav button { background: none; border: none; color: #8b7355; cursor: pointer; font-size: 16px; padding: 4px 6px; }
+.mon-nav button:hover { color: #5c4a3d; }
+.mon-label { cursor: pointer; user-select: none; }
+.mon-label:hover { color: #6b5a45; }
+.today-btn { font-size: 12px; color: #8b7355; cursor: pointer; background: #fff; border: 1px solid #d5c8bc; padding: 4px 10px; border-radius: 12px; }
+
+/* 筛选行 */
+.filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+.filter-row .mgr-btn { font-size: 12px; padding: 3px 12px; border-radius: 12px; border: 1px solid #8b7355; background: #fff; color: #8b7355; cursor: pointer; white-space: nowrap; }
+.filter-row .mgr-btn:hover { background: #8b7355; color: #fff; }
+.cat-filter-btn { font-size: 12px; padding: 3px 10px; border-radius: 12px; border: 1px solid #d5c8bc; background: #fff; color: #8b7355; cursor: pointer; white-space: nowrap; }
+.cat-filter-btn:hover { border-color: #8b7355; }
+.cat-filter-btn.active { background: #f0e8dc; }
+
+/* 日历 */
+.weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 12px; color: #bbb; margin-bottom: 4px; }
+.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.day-cell { aspect-ratio: 1; border-radius: 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; color: #5c4a3d; background: #fff; border: 1px solid #ede6dd; position: relative; transition: all .12s; }
+.day-cell:hover { border-color: #8b7355; background: #fdfaf6; }
+.day-cell.other-month { background: transparent; border-color: transparent; color: #ddd; }
+.day-cell.today { border-color: #8b7355; font-weight: bold; }
+.day-cell .day-num { line-height: 1; }
+.day-cell .badge { font-size: 10px; background: #f0e8dc; color: #8b7355; border-radius: 8px; padding: 1px 5px; margin-top: 1px; min-width: 16px; text-align: center; }
+.day-cell.today .badge { background: #8b7355; color: #fff; }
+.bottom { margin-top: 16px; font-size: 12px; color: #bbb; text-align: center; }
+
+/* 即将到期 */
+.upcoming { margin-top: 18px; padding: 14px 16px; background: #fff; border-radius: 8px; border: 1px solid #ede6dd; display: none; }
+.upcoming.show { display: block; }
+.upcoming .up-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.upcoming .up-header h4 { font-size: 13px; color: #c0392b; }
+.upcoming .up-header .warn-set { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #999; cursor: pointer; }
+.upcoming .up-header .warn-set input { width: 40px; padding: 2px 4px; border: 1px solid #d5c8bc; border-radius: 3px; font-size: 11px; text-align: center; outline: none; }
+.upcoming .up-header .warn-set select { padding: 2px 2px; border: 1px solid #d5c8bc; border-radius: 3px; font-size: 10px; outline: none; background: #fff; }
+.upcoming .up-header .warn-set input:focus, .upcoming .up-header .warn-set select:focus { border-color: #8b7355; }
+.upcoming .up-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #f5f0eb; }
+.upcoming .up-item:last-child { border-bottom: none; }
+.upcoming .up-item .up-date { font-size: 11px; color: #c0392b; white-space: nowrap; min-width: 52px; }
+.upcoming .up-item .up-text { flex: 1; color: #5c4a3d; }
+.upcoming .up-item .up-cat { font-size: 10px; color: #999; }
+.upcoming .up-empty { font-size: 12px; color: #bbb; }
+
+/* 添加按钮 */
+.fab { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 50px; height: 50px; border-radius: 50%; background: #8b7355; color: #fff; font-size: 26px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.2); z-index: 8; display: flex; align-items: center; justify-content: center; }
+.fab:hover { background: #6b5a45; }
+
+/* 弹窗通用 */
+.modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.35); z-index: 99; justify-content: center; align-items: flex-end; }
 .modal-bg.show { display: flex; }
-.modal { background: #fff; border-radius: 8px; padding: 24px; width: 320px; max-width: 90vw; box-shadow: 0 4px 20px rgba(0,0,0,.15); }
-.modal h3 { font-size: 16px; color: #5c4a3d; margin-bottom: 14px; }
-.modal input { width: 100%; padding: 8px 12px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 14px; outline: none; margin-bottom: 10px; }
-.modal input:focus { border-color: #b8a088; }
-.modal .mbtn { display: flex; gap: 8px; justify-content: flex-end; }
-.modal .mbtn button { padding: 7px 18px; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; }
-.modal .mbtn .ok { background: #8b7355; color: #fff; }
-.modal .mbtn .cancel { background: #eee; color: #666; }
-.modal .mbtn .ok:hover { background: #6b5a45; }
+.modal { background: #fff; border-radius: 14px 14px 0 0; padding: 28px 22px 34px; width: 480px; max-width: 100vw; box-shadow: 0 -4px 20px rgba(0,0,0,.12); animation: up .2s ease-out; max-height: 85vh; overflow-y: auto; }
+@keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal h3 { font-size: 16px; color: #5c4a3d; margin-bottom: 16px; }
+.modal .row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+.modal .row label { font-size: 13px; color: #999; min-width: 46px; text-align: right; }
+.modal input[type=text] { flex: 1; padding: 8px 12px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 15px; background: #fff; outline: none; }
+.modal input[type=date], .modal input[type=time] { padding: 8px 6px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 13px; background: #fff; outline: none; color: #5c4a3d; }
+.modal select { padding: 8px 6px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 13px; background: #fff; outline: none; color: #5c4a3d; cursor: pointer; }
+.modal input:focus, .modal select:focus { border-color: #b8a088; }
+.modal .hint { font-size: 11px; color: #ccc; margin-bottom: 12px; padding-left: 54px; }
+.modal .btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
+.modal .btns button { padding: 10px 28px; border-radius: 6px; border: none; cursor: pointer; font-size: 15px; }
+.modal .btns .ok { background: #8b7355; color: #fff; }
+.modal .btns .cancel { background: #eee; color: #666; }
+
+/* ── 日视图页面 ── */
+.day-view { display: none; flex-direction: column; }
+.day-view.active { display: flex; }
+.day-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.day-header button { background: #fff; border: 1px solid #d5c8bc; color: #8b7355; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.day-header button:hover { border-color: #8b7355; }
+.day-header .day-title { font-size: 17px; font-weight: bold; color: #5c4a3d; flex: 1; }
+
+/* 全天事项 */
+.all-day { margin-bottom: 14px; }
+.all-day-label { font-size: 12px; color: #999; margin-bottom: 5px; }
+.all-day-item { display: inline-block; font-size: 13px; padding: 5px 14px; border-radius: 14px; background: #fdfaf6; border: 1.5px solid #ede6dd; margin: 0 5px 5px 0; cursor: pointer; }
+
+/* 时间表容器 */
+.timeline-wrap { position: relative; margin-top: 4px; }
+/* 每小时背景线 */
+.timeline-bg { position: relative; }
+.timeline-bg .tl-hr { display: flex; align-items: flex-start; height: 48px; border-top: 1px solid #f0ebe0; }
+.timeline-bg .tl-hr-label { width: 38px; font-size: 11px; color: #bbb; padding: 0 4px 0 0; text-align: right; flex-shrink: 0; line-height: 1; }
+.timeline-bg .tl-hr-line { flex: 1; }
+
+/* 任务色条覆盖层 */
+.timeline-overlay { position: absolute; top: 0; left: 38px; right: 0; bottom: 0; pointer-events: none; }
+.timeline-overlay .task-block { position: absolute; border-radius: 5px; padding: 1px 6px; font-size: 10px; color: #fff; cursor: pointer; pointer-events: auto; overflow: hidden; line-height: 1.2; min-height: 4px; box-sizing: border-box; }
+.task-block .tb-time { font-size: 9px; opacity: .85; white-space: nowrap; }
+.task-block .tb-title { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.empty-tl { text-align: center; color: #ccc; padding: 40px 0; font-size: 13px; }
+
+/* 色条操作菜单 */
+.task-menu { position: fixed; z-index: 200; background: #fff; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.18); padding: 4px 0; min-width: 120px; display: none; }
+.task-menu.show { display: block; }
+.task-menu div { padding: 8px 16px; font-size: 13px; cursor: pointer; color: #444; white-space: nowrap; }
+.task-menu div:hover { background: #f5f0eb; }
+.task-menu div.danger { color: #c0392b; }
+.task-menu div:first-child { border-radius: 8px 8px 0 0; }
+.task-menu div:last-child { border-radius: 0 0 8px 8px; }
+
+/* 分类筛选面板 */
+.cat-sheet { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.35); z-index: 100; justify-content: center; align-items: flex-end; }
+.cat-sheet.show { display: flex; }
+.cat-sheet .sheet { background: #fff; border-radius: 14px 14px 0 0; padding: 24px 22px 30px; width: 400px; max-width: 100vw; animation: up .2s ease-out; }
+.cat-sheet .sheet h3 { font-size: 16px; color: #5c4a3d; margin-bottom: 14px; }
+.cat-sheet .sheet label { display: flex; align-items: center; gap: 8px; padding: 8px 0; font-size: 14px; color: #5c4a3d; cursor: pointer; border-bottom: 1px solid #f5f0eb; }
+.cat-sheet .sheet label input { accent-color: #8b7355; width: 16px; height: 16px; }
+.cat-sheet .sheet label .c-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.cat-sheet .sheet .sbtn { margin-top: 14px; text-align: right; }
+.cat-sheet .sheet .sbtn button { padding: 8px 26px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; background: #8b7355; color: #fff; }
+
+/* 年月选择面板 */
+.ym-picker { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.35); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 18vh; }
+.ym-picker.show { display: flex; }
+.ym-picker .panel { background: #fff; border-radius: 10px; padding: 18px 20px 22px; width: 360px; max-width: 90vw; box-shadow: 0 4px 20px rgba(0,0,0,.15); text-align: center; }
+.ym-picker .panel .yr-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 14px; font-size: 18px; font-weight: bold; color: #5c4a3d; }
+.ym-picker .panel .yr-row button { background: #fff; border: 1px solid #d5c8bc; color: #8b7355; cursor: pointer; font-size: 16px; padding: 2px 10px; border-radius: 4px; }
+.ym-picker .panel .yr-row button:hover { border-color: #8b7355; }
+.ym-picker .panel .mon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.ym-picker .panel .mon-grid span { padding: 10px 0; border-radius: 6px; cursor: pointer; font-size: 14px; color: #5c4a3d; background: #fdfaf6; border: 1px solid #ede6dd; }
+.ym-picker .panel .mon-grid span:hover { border-color: #8b7355; }
+.ym-picker .panel .mon-grid span.on { background: #8b7355; color: #fff; border-color: #8b7355; }
+.ym-picker .panel .ok-row { margin-top: 14px; }
+.ym-picker .panel .ok-row button { padding: 8px 30px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; background: #8b7355; color: #fff; }
+
+/* 分类管理弹窗 */
+.sm-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.35); z-index: 100; justify-content: center; align-items: center; }
+.sm-bg.show { display: flex; }
+.sm-bg .box { background: #fff; border-radius: 10px; padding: 24px; width: 330px; max-width: 90vw; box-shadow: 0 4px 20px rgba(0,0,0,.15); }
+.sm-bg .box h3 { font-size: 16px; color: #5c4a3d; margin-bottom: 14px; }
+.sm-bg .box input { width: 100%; padding: 8px 12px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 14px; outline: none; margin-bottom: 10px; }
+.sm-bg .box input:focus { border-color: #b8a088; }
+.sm-bg .box .mbtn { display: flex; gap: 8px; justify-content: flex-end; }
+.sm-bg .box .mbtn button { padding: 7px 18px; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; }
+.sm-bg .box .mbtn .ok { background: #8b7355; color: #fff; }
+.sm-bg .box .mbtn .cancel { background: #eee; color: #666; }
+
+/* 事项管理面板 */
+.mgr-view { display: none; flex-direction: column; }
+.mgr-view.active { display: flex; }
+.mgr-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.mgr-header button { background: #fff; border: 1px solid #d5c8bc; color: #8b7355; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.mgr-header button:hover { border-color: #8b7355; }
+.mgr-header .mgr-title { font-size: 17px; font-weight: bold; color: #5c4a3d; flex: 1; }
+.mgr-search { display: flex; gap: 6px; margin-bottom: 12px; }
+.mgr-search input { flex: 1; padding: 7px 10px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 13px; background: #fff; outline: none; }
+.mgr-search input:focus { border-color: #b8a088; }
+.mgr-search select { padding: 7px 6px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 12px; background: #fff; outline: none; }
+.mgr-list { list-style: none; }
+.mgr-list li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #fff; border-radius: 4px; margin-bottom: 3px; border: 1px solid #ede6dd; font-size: 13px; }
+.mgr-list li .mgr-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.mgr-list li .mgr-text { flex: 1; color: #4a4a4a; }
+.mgr-list li .mgr-info { font-size: 11px; color: #bbb; margin-right: 4px; white-space: nowrap; }
+.mgr-list li.done .mgr-text { text-decoration: line-through; color: #ccc; }
+.mgr-list li .mgr-btns { display: flex; gap: 4px; }
+.mgr-list li .mgr-btns button { background: none; border: none; cursor: pointer; font-size: 12px; padding: 2px 6px; border-radius: 3px; color: #999; }
+.mgr-list li .mgr-btns button:hover { background: #f5f0eb; color: #5c4a3d; }
+.mgr-list li .mgr-btns .mgrdel:hover { color: #c0392b; }
+.empty-mgr { text-align: center; color: #ccc; padding: 60px 0; font-size: 14px; }
+.mgr-stats { font-size: 11px; color: #bbb; text-align: center; margin-top: 12px; }
+
 .exist-list { margin-bottom: 12px; }
 .exist-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #f5f0eb; }
 .exist-item .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 .exist-item .del-cat { background: none; border: none; color: #ddd; cursor: pointer; font-size: 14px; }
 .exist-item .del-cat:hover { color: #c0392b; }
-.date-group { margin-bottom: 14px; }
-.date-label { font-size: 12px; color: #b8a088; margin-bottom: 4px; padding-left: 2px; }
-.list { list-style: none; }
-.list li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #fff; border-radius: 4px; margin-bottom: 3px; border: 1px solid #ede6dd; font-size: 14px; }
-.list li.done .txt { text-decoration: line-through; color: #ccc; }
-.list li.done .cat-dot { opacity: .5; }
-.list li .txt { flex: 1; color: #4a4a4a; }
-.list li .range { font-size: 11px; color: #bbb; margin-right: 4px; white-space: nowrap; }
-.list li input[type=checkbox] { width: 16px; height: 16px; accent-color: #8b7355; cursor: pointer; }
-.cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.list li .del { background: none; border: none; color: #ddd; cursor: pointer; font-size: 16px; line-height: 1; }
-.list li .del:hover { color: #c0392b; }
-.empty { text-align: center; color: #ccc; padding: 40px 0; font-size: 14px; }
-.bottom { margin-top: 14px; font-size: 12px; color: #bbb; text-align: right; }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <h1>📋 记一下 省的忘</h1>
-
-  <div class="top-bar">
-    <input type="text" id="inp" placeholder="要干嘛..." onkeydown="if(event.key==='Enter')add()">
-    <input type="date" id="dateStart" title="开始日期">
-    <input type="time" id="timeStart" title="开始时间">
-    <span style="font-size:11px;color:#ccc;">~</span>
-    <input type="date" id="dateEnd" title="结束日期（可不填）">
-    <input type="time" id="timeEnd" title="结束时间（可不填）">
-    <select id="catInp"></select>
-    <button class="small-btn" onclick="openCatMgr()" title="管理分类">+</button>
-    <button onclick="add()">加</button>
-  </div>
-  <div class="date-row">时间不填则全天，结束日期不填等于开始日期</div>
-
-  <div class="filter-row">
-    <div class="tabs">
-      <span class="on" onclick="sw('all')">全部</span>
-      <span onclick="sw('todo')">没做完</span>
-      <span onclick="sw('done')">搞定了</span>
+  <!-- ═══════ 日历视图 ═══════ -->
+  <div id="calendarView">
+    <div class="top">
+      <h1>📋 记一下</h1>
+      <div class="mon-nav">
+        <button onclick="prevMonth()">◀</button>
+        <span class="mon-label" id="monLabel" onclick="openYmPicker()"></span>
+        <button onclick="nextMonth()">▶</button>
+      </div>
+      <span class="today-btn" onclick="goToday()">今天</span>
     </div>
-    <div class="cat-pills" id="catPills">
-      <span class="cat-pill on" onclick="filterCat('')">全部类</span>
+
+    <div class="filter-row">
+      <span class="cat-filter-btn" id="catFilterBtn" onclick="openCatSheet()">分类 ▾</span>
+      <button class="mgr-btn" onclick="openManager()">事项管理</button>
     </div>
+
+    <div class="weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div class="days" id="daysGrid"></div>
+    <div class="upcoming" id="upcomingBlock">
+      <div class="up-header">
+        <h4>⏰ 即将到期</h4>
+        <span class="warn-set">提前<input type="number" id="warnVal" value="72" min="1" max="720" step="1" onchange="updateWarn()" onclick="event.stopPropagation()"><select id="warnUnit" onchange="updateWarn()" onclick="event.stopPropagation()"><option value="60">分钟</option><option value="1" selected>小时</option><option value="0.04167">天</option></select></span>
+      </div>
+    </div>
+    <div class="bottom" id="cnt"></div>
   </div>
 
-  <div id="container"></div>
-  <div class="bottom" id="cnt"></div>
+  <!-- ═══════ 事项管理 ═══════ -->
+  <div class="mgr-view" id="mgrView">
+    <div class="mgr-header">
+      <button onclick="closeManager()">◀ 返回</button>
+      <span class="mgr-title">事项管理</span>
+    </div>
+    <div class="mgr-search">
+      <input type="text" id="mgrSearch" placeholder="搜索事项..." oninput="renderManager()">
+      <select id="mgrCatFilter" onchange="renderManager()">
+        <option value="">所有分类</option>
+      </select>
+      <select id="mgrStatus" onchange="renderManager()">
+        <option value="all">全部</option>
+        <option value="todo">未完成</option>
+        <option value="done">已完成</option>
+      </select>
+    </div>
+    <ul class="mgr-list" id="mgrList"></ul>
+    <div class="mgr-stats" id="mgrStats"></div>
+  </div>
+
+  <!-- ═══════ 日视图 ═══════ -->
+  <div class="day-view" id="dayView">
+    <div class="day-header">
+      <button onclick="backToCalendar()">◀ 返回</button>
+      <span class="day-title" id="dayTitle"></span>
+    </div>
+    <div class="all-day" id="allDayBlock"></div>
+    <div class="timeline-wrap" id="timelineWrap"></div>
+  </div>
 
 </div>
 
-<!-- 管理分类弹窗 -->
-<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeCatMgr()">
+<button class="fab" id="fabBtn" onclick="openAdd()" title="添加">+</button>
+
+<!-- 添加事项弹窗 -->
+<div class="modal-bg" id="addModalBg" onclick="if(event.target===this)closeAdd()">
   <div class="modal">
+    <h3>添加事项</h3>
+    <div class="row"><label>内容</label><input type="text" id="inp" placeholder="要干嘛..." onkeydown="if(event.key==='Enter')add()"></div>
+    <div class="row"><label>分类</label><select id="catInp"></select><button onclick="openCatMgr()" style="background:#fff;color:#8b7355;border:1px solid #d5c8bc;padding:8px 10px;border-radius:4px;cursor:pointer;font-size:13px;">管</button></div>
+    <div class="row"><label>开始</label><input type="date" id="dateStart"><input type="time" id="timeStart"></div>
+    <div class="row"><label>结束</label><input type="date" id="dateEnd"><input type="time" id="timeEnd"></div>
+    <div class="hint">时间不填 = 全天 · 结束不填 = 同一天</div>
+    <div class="btns"><button class="cancel" onclick="closeAdd()">取消</button><button class="ok" onclick="add()">添加</button></div>
+  </div>
+</div>
+
+<!-- 年月选择面板 -->
+<div class="ym-picker" id="ymPicker" onclick="if(event.target===this)closeYmPicker()">
+  <div class="panel">
+    <div class="yr-row">
+      <button onclick="ymYear-=1;renderYmPanel()">◀</button>
+      <span id="ymYearLabel"></span>
+      <button onclick="ymYear+=1;renderYmPanel()">▶</button>
+    </div>
+    <div class="mon-grid" id="ymMonGrid"></div>
+    <div class="ok-row"><button onclick="confirmYmPicker()">确定</button></div>
+  </div>
+</div>
+
+<!-- 分类筛选面板 -->
+<div class="cat-sheet" id="catSheet" onclick="if(event.target===this)closeCatSheet()">
+  <div class="sheet">
+    <h3>显示哪些分类</h3>
+    <div id="catSheetList"></div>
+    <div class="sbtn"><button onclick="applyCatFilter()">确定</button></div>
+  </div>
+</div>
+
+<!-- 色条操作菜单 -->
+<div class="task-menu" id="taskMenu">
+  <div onclick="menuToggleDone()" id="menuDoneText">✓ 标记完成</div>
+  <div onclick="openEditTask()">✎ 修改</div>
+  <div class="danger" onclick="menuDelete()">✕ 删除</div>
+</div>
+
+<!-- 修改事项弹窗 -->
+<div class="modal-bg" id="editModalBg" onclick="if(event.target===this)closeEdit()">
+  <div class="modal">
+    <h3>修改事项</h3>
+    <div class="row"><label>内容</label><input type="text" id="editInp" onkeydown="if(event.key==='Enter')saveEdit()"></div>
+    <div class="row"><label>分类</label><select id="editCat"></select></div>
+    <div class="row"><label>开始</label><input type="date" id="editDateStart"><input type="time" id="editTimeStart"></div>
+    <div class="row"><label>结束</label><input type="date" id="editDateEnd"><input type="time" id="editTimeEnd"></div>
+    <div class="hint">时间不填 = 全天 · 结束不填 = 同一天</div>
+    <div class="btns"><button class="cancel" onclick="closeEdit()">取消</button><button class="ok" onclick="saveEdit()">保存</button></div>
+  </div>
+</div>
+
+<!-- 分类管理弹窗 -->
+<div class="sm-bg" id="catModalBg" onclick="if(event.target===this)closeCatMgr()">
+  <div class="box">
     <h3>管理分类</h3>
     <div class="exist-list" id="existList"></div>
     <input type="text" id="newCatName" placeholder="新分类名（如：健身）" onkeydown="if(event.key==='Enter')addCat()">
-    <div class="mbtn">
-      <button class="cancel" onclick="closeCatMgr()">关</button>
-      <button class="ok" onclick="addCat()">添加</button>
-    </div>
+    <div class="mbtn"><button class="cancel" onclick="closeCatMgr()">关</button><button class="ok" onclick="addCat()">添加</button></div>
   </div>
 </div>
 
 <script>
-// ── 分类管理 ──
+// ── 数据 ──
 let catColors = JSON.parse(localStorage.catColors || '{"学习":"#6b8e6b","生活":"#c9a96e","工作":"#7b8eaa","其他":"#bbb"}');
 let catOrder = JSON.parse(localStorage.catOrder || '["学习","生活","工作","其他"]');
 let tasks = JSON.parse(localStorage.todo || '[]');
 let tab = 'all';
-let catFilter = '';
+// 分类显示开关：null = 全部显示，否则是 Set
+let visibleCats = null; // null 或 Set
+let viewYear = new Date().getFullYear();
+let viewMonth = new Date().getMonth();
+let selectedDate = null;
 
 let spareColors = ['#e07b5a','#5a9e8f','#a07cc5','#d4a843','#5b8cc9','#c9607a','#6ea87a','#b8845c','#7b9ec7','#c98d5e'];
+function randomColor() { return spareColors[Math.floor(Math.random() * spareColors.length)]; }
+function saveAll() { localStorage.catColors = JSON.stringify(catColors); localStorage.catOrder = JSON.stringify(catOrder); localStorage.todo = JSON.stringify(tasks); }
 
-function randomColor() {
-  return spareColors[Math.floor(Math.random() * spareColors.length)];
-}
-
-function saveAll() {
-  localStorage.catColors = JSON.stringify(catColors);
-  localStorage.catOrder = JSON.stringify(catOrder);
-  localStorage.todo = JSON.stringify(tasks);
-}
-
+// ── 分类管理 ──
 function addCat() {
   let name = document.getElementById('newCatName').value.trim();
-  if (!name) return;
-  if (catOrder.includes(name)) { document.getElementById('newCatName').value = ''; return; }
-  catOrder.push(name);
-  catColors[name] = randomColor();
-  document.getElementById('newCatName').value = '';
-  saveAll();
-  refreshCatUI();
-  openCatMgr();
+  if (!name || catOrder.includes(name)) { document.getElementById('newCatName').value = ''; return; }
+  catOrder.push(name); catColors[name] = randomColor();
+  document.getElementById('newCatName').value = ''; saveAll(); refreshUI(); openCatMgr();
 }
-
 function removeCat(name) {
   if (['学习','生活','工作','其他'].includes(name)) return;
-  catOrder = catOrder.filter(c => c !== name);
-  delete catColors[name];
+  catOrder = catOrder.filter(c => c !== name); delete catColors[name];
   tasks = tasks.map(t => t.cat === name ? { ...t, cat: '其他' } : t);
-  if (catFilter === name) catFilter = '';
-  saveAll();
-  refreshCatUI();
-  render();
-  openCatMgr();
+  saveAll(); refreshUI(); renderCalendar(); openCatMgr();
 }
-
 function openCatMgr() {
-  let list = document.getElementById('existList');
-  list.innerHTML = catOrder.map(c =>
-    `<div class="exist-item">
-      <span><span class="dot" style="background:${catColors[c]}"></span>${c}</span>
-      ${['学习','生活','工作','其他'].includes(c) ? '<span style="font-size:11px;color:#ccc;">默认</span>' : `<button class="del-cat" onclick="removeCat('${c}')">×</button>`}
-    </div>`
+  document.getElementById('existList').innerHTML = catOrder.map(c =>
+    `<div class="exist-item"><span><span class="dot" style="background:${catColors[c]}"></span>${c}</span>${['学习','生活','工作','其他'].includes(c) ? '<span style="font-size:11px;color:#ccc;">默认</span>' : `<button class="del-cat" onclick="removeCat('${c}')">×</button>`}</div>`
   ).join('');
   document.getElementById('newCatName').value = '';
-  document.getElementById('modalBg').classList.add('show');
+  document.getElementById('catModalBg').classList.add('show');
+}
+function closeCatMgr() { document.getElementById('catModalBg').classList.remove('show'); refreshUI(); renderCalendar(); }
+
+// ── 分类筛选面板 ──
+function openCatSheet() {
+  let html = '';
+  let cats = visibleCats === null ? new Set(catOrder) : visibleCats;
+  for (let c of catOrder) {
+    html += `<label>
+      <input type="checkbox" value="${c}" ${cats.has(c) ? 'checked' : ''}>
+      <span class="c-dot" style="background:${catColors[c]}"></span>${c}
+    </label>`;
+  }
+  document.getElementById('catSheetList').innerHTML = html;
+  document.getElementById('catSheet').classList.add('show');
+}
+function closeCatSheet() { document.getElementById('catSheet').classList.remove('show'); }
+function applyCatFilter() {
+  let checks = document.querySelectorAll('#catSheetList input[type=checkbox]');
+  let sel = new Set();
+  checks.forEach(cb => { if (cb.checked) sel.add(cb.value); });
+  visibleCats = (sel.size === catOrder.length) ? null : sel;
+  closeCatSheet();
+  updateCatBtn();
+  renderCalendar();
+}
+function updateCatBtn() {
+  let btn = document.getElementById('catFilterBtn');
+  if (visibleCats === null) { btn.textContent = '分类 ▾'; btn.classList.remove('active'); }
+  else { btn.textContent = '分类 ' + visibleCats.size; btn.classList.add('active'); }
 }
 
-function closeCatMgr() {
-  document.getElementById('modalBg').classList.remove('show');
-  refreshCatUI();
-  render();
+function refreshUI() {
+  updateCatBtn();
+  // 添加弹窗的分类下拉
+  document.getElementById('catInp').innerHTML = catOrder.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
-function refreshCatUI() {
-  let sel = document.getElementById('catInp');
-  sel.innerHTML = catOrder.map(c => `<option value="${c}">${c}</option>`).join('');
-  let pills = document.getElementById('catPills');
-  pills.innerHTML = '<span class="cat-pill' + (catFilter === '' ? ' on' : '') + '" onclick="filterCat(\'\')">全部类</span>' +
-    catOrder.map(c => `<span class="cat-pill${catFilter === c ? ' on' : ''}" onclick="filterCat('${c}')">${c}</span>`).join('');
+// ── 事项是否可见 ──
+function isVisible(t) {
+  if (visibleCats !== null && !visibleCats.has(t.cat)) return false;
+  return true;
 }
 
-// ── 事项操作 ──
-document.getElementById('dateStart').value = new Date().toISOString().slice(0, 10);
-document.getElementById('dateEnd').value = '';
+// ── 筛选 ──
+function sw(t) { tab = t; renderCalendar(); }
+
+// ── 事项管理 ──
+function openManager() {
+  document.getElementById('calendarView').style.display = 'none';
+  document.getElementById('mgrView').classList.add('active');
+  document.getElementById('fabBtn').style.display = 'none';
+  // 填充分类下拉
+  let sel = document.getElementById('mgrCatFilter');
+  sel.innerHTML = '<option value="">所有分类</option>' + catOrder.map(c => `<option value="${c}">${c}</option>`).join('');
+  renderManager();
+}
+function closeManager() {
+  document.getElementById('calendarView').style.display = '';
+  document.getElementById('mgrView').classList.remove('active');
+  document.getElementById('fabBtn').style.display = 'flex';
+  renderCalendar();
+}
+function renderManager() {
+  let q = document.getElementById('mgrSearch').value.trim().toLowerCase();
+  let c = document.getElementById('mgrCatFilter').value;
+  let s = document.getElementById('mgrStatus').value;
+
+  let f = [...tasks];
+  if (c) f = f.filter(t => t.cat === c);
+  if (s === 'todo') f = f.filter(t => !t.done);
+  else if (s === 'done') f = f.filter(t => t.done);
+  if (q) f = f.filter(t => t.text.toLowerCase().includes(q));
+
+  f.sort((a, b) => a.dateStart.localeCompare(b.dateStart) || (a.done ? 1 : -1));
+
+  let list = document.getElementById('mgrList');
+  if (f.length === 0) {
+    list.innerHTML = '<div class="empty-mgr">没有匹配的事项</div>';
+  } else {
+    list.innerHTML = f.map(t => {
+      let color = catColors[t.cat] || '#bbb';
+      let ds = t.dateStart.slice(5);
+      let de = t.dateEnd !== t.dateStart ? ' ~ ' + t.dateEnd.slice(5) : '';
+      let tm = t.timeStart ? ' ' + t.timeStart + (t.timeEnd && t.timeEnd !== t.timeStart ? '-' + t.timeEnd : '') : '';
+      return `<li class="${t.done ? 'done' : ''}">
+        <input type="checkbox" ${t.done ? 'checked' : ''} onclick="toggle(${t.id})">
+        <span class="mgr-dot" style="background:${color}"></span>
+        <span class="mgr-text">${t.text.replace(/</g,'&lt;')}</span>
+        <span class="mgr-info">${t.cat} · ${ds}${de}${tm}</span>
+        <span class="mgr-btns">
+          <button onclick="openEditFromMgr(${t.id})">改</button>
+          <button class="mgrdel" onclick="remove(${t.id})">删</button>
+        </span>
+      </li>`;
+    }).join('');
+  }
+  document.getElementById('mgrStats').textContent = `共 ${tasks.length} 项 · 完成 ${tasks.filter(t=>t.done).length} · 未完成 ${tasks.filter(t=>!t.done).length}`;
+}
+
+function openEditFromMgr(id) {
+  menuTaskId = id;
+  openEditTask();
+  // 关掉管理面板再打开编辑弹窗
+  setTimeout(() => { document.getElementById('calendarView').style.display = ''; document.getElementById('mgrView').classList.remove('active'); document.getElementById('fabBtn').style.display = 'flex'; }, 100);
+}
+
+// ── 添加 ──
+function openAdd() {
+  document.getElementById('dateStart').value = selectedDate || new Date().toISOString().slice(0, 10);
+  document.getElementById('dateEnd').value = '';
+  document.getElementById('timeStart').value = '';
+  document.getElementById('timeEnd').value = '';
+  document.getElementById('inp').value = '';
+  document.getElementById('addModalBg').classList.add('show');
+  setTimeout(() => document.getElementById('inp').focus(), 200);
+}
+function closeAdd() { document.getElementById('addModalBg').classList.remove('show'); }
 
 function add() {
   let v = document.getElementById('inp').value.trim();
   if (!v) return;
   let ds = document.getElementById('dateStart').value || new Date().toISOString().slice(0, 10);
   let de = document.getElementById('dateEnd').value || ds;
-  let ts = document.getElementById('timeStart').value; // 空字符串 = 不填
+  let ts = document.getElementById('timeStart').value;
   let te = document.getElementById('timeEnd').value;
   if (de < ds) { let tmp = ds; ds = de; de = tmp; ts = te; te = ts; }
-  let c = document.getElementById('catInp').value || catOrder[0];
-  tasks.push({ id: Date.now(), text: v, done: false, dateStart: ds, dateEnd: de, timeStart: ts, timeEnd: te, cat: c });
-  document.getElementById('inp').value = '';
-  document.getElementById('dateStart').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('dateEnd').value = '';
-  document.getElementById('timeStart').value = '';
-  document.getElementById('timeEnd').value = '';
-  saveAll();
-  render();
-  document.getElementById('inp').focus();
+  tasks.push({ id: Date.now(), text: v, done: false, dateStart: ds, dateEnd: de, timeStart: ts, timeEnd: te, cat: document.getElementById('catInp').value || catOrder[0] });
+  saveAll(); closeAdd();
+  if (document.getElementById('dayView').classList.contains('active')) openDayView(selectedDate);
+  else renderCalendar();
 }
 
-function toggle(id) {
-  tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
-  saveAll();
-  render();
+function toggle(id) { tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t); saveAll(); refreshViews(); }
+function remove(id) { tasks = tasks.filter(t => t.id !== id); saveAll(); refreshViews(); }
+
+// ── 色条操作菜单 ──
+let menuTaskId = null;
+function openTaskMenu(e, id) {
+  menuTaskId = id;
+  let menu = document.getElementById('taskMenu');
+  let t = tasks.find(x => x.id === id);
+  document.getElementById('menuDoneText').textContent = t && t.done ? '○ 标记未完成' : '✓ 标记完成';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  menu.classList.add('show');
+  // 点击其他地方关闭
+  setTimeout(() => {
+    document.addEventListener('click', closeTaskMenu, { once: true });
+  }, 0);
+}
+function closeTaskMenu() {
+  document.getElementById('taskMenu').classList.remove('show');
+  menuTaskId = null;
+}
+function menuToggleDone() {
+  if (menuTaskId !== null) toggle(menuTaskId);
+  closeTaskMenu();
+}
+function menuDelete() {
+  if (menuTaskId !== null) remove(menuTaskId);
+  closeTaskMenu();
 }
 
-function remove(id) {
-  tasks = tasks.filter(t => t.id !== id);
-  saveAll();
-  render();
+// ── 修改事项 ──
+function openEditTask() {
+  let id = menuTaskId;
+  if (id === null) return;
+  closeTaskMenu();
+  let t = tasks.find(x => x.id === id);
+  if (!t) return;
+  menuTaskId = id; // 重新设回去给 saveEdit 用
+  document.getElementById('editInp').value = t.text;
+  document.getElementById('editDateStart').value = t.dateStart;
+  document.getElementById('editDateEnd').value = t.dateEnd === t.dateStart ? '' : t.dateEnd;
+  document.getElementById('editTimeStart').value = t.timeStart || '';
+  document.getElementById('editTimeEnd').value = t.timeEnd || '';
+  document.getElementById('editCat').innerHTML = catOrder.map(c => `<option value="${c}" ${c === t.cat ? 'selected' : ''}>${c}</option>`).join('');
+  document.getElementById('editModalBg').classList.add('show');
+}
+function closeEdit() { document.getElementById('editModalBg').classList.remove('show'); menuTaskId = null; }
+function saveEdit() {
+  let id = menuTaskId;
+  if (id === null) return;
+  let v = document.getElementById('editInp').value.trim();
+  if (!v) return;
+  let ds = document.getElementById('editDateStart').value;
+  let de = document.getElementById('editDateEnd').value || ds;
+  let ts = document.getElementById('editTimeStart').value;
+  let te = document.getElementById('editTimeEnd').value;
+  if (de < ds) { let tmp = ds; ds = de; de = tmp; ts = te; te = ts; }
+  let c = document.getElementById('editCat').value;
+  tasks = tasks.map(t => t.id === id ? { ...t, text: v, dateStart: ds, dateEnd: de, timeStart: ts, timeEnd: te, cat: c } : t);
+  saveAll(); closeEdit(); refreshViews();
 }
 
-function sw(t) {
-  tab = t;
-  document.querySelectorAll('.tabs span').forEach((s, i) => s.className = ['all','todo','done'][i] === t ? 'on' : '');
-  render();
+function refreshViews() {
+  if (document.getElementById('dayView').classList.contains('active')) openDayView(selectedDate);
+  else renderCalendar();
 }
 
-function filterCat(c) {
-  catFilter = c;
-  refreshCatUI();
-  render();
-}
-
+// ── 日期工具 ──
 function prettyDate(d) {
-  let today = new Date().toISOString().slice(0, 10);
-  let tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  let yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-  if (d === today) return '今天';
-  if (d === tomorrow) return '明天';
-  if (d === yesterday) return '昨天';
+  let t = new Date().toISOString().slice(0, 10);
+  let tm = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  let y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (d === t) return '今天';
+  if (d === tm) return '明天';
+  if (d === y) return '昨天';
   return d;
 }
-
-// 格式化时间：去掉前导零，空字符串不显示
-function prettyTime(t) {
-  if (!t) return '';
-  let [h, m] = t.split(':');
-  return h + ':' + m;
+function prettyTime(t) { if (!t) return ''; let [h, m] = t.split(':'); return h + ':' + m; }
+function nextDay(ds) { let d = new Date(ds); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); }
+function fmtDay(y, m, d) {
+  let mm = m < 0 ? 11 : m > 11 ? 0 : m;
+  let yy = m < 0 ? y - 1 : m > 11 ? y + 1 : y;
+  return `${yy}-${String(mm + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-function formatRange(t) {
-  let d = prettyDate(t.dateStart);
-  if (t.dateStart === t.dateEnd && !t.timeStart && !t.timeEnd) return d;
-  if (t.dateStart === t.dateEnd && t.timeStart && !t.timeEnd) return d + ' ' + prettyTime(t.timeStart);
-  if (t.dateStart === t.dateEnd && t.timeStart && t.timeEnd) return d + ' ' + prettyTime(t.timeStart) + '-' + prettyTime(t.timeEnd);
-  // 跨天
-  let s = d + (t.timeStart ? ' ' + prettyTime(t.timeStart) : '');
-  let e = prettyDate(t.dateEnd) + (t.timeEnd ? ' ' + prettyTime(t.timeEnd) : '');
-  return s + ' ~ ' + e;
-}
+// ── 日历渲染 ──
+function renderCalendar() {
+  document.getElementById('monLabel').textContent = `${viewYear}年${viewMonth + 1}月`;
+  let firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  let daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  let daysInPrev = new Date(viewYear, viewMonth, 0).getDate();
+  let todayStr = new Date().toISOString().slice(0, 10);
 
-function render() {
-  let f = tab === 'all' ? tasks : tab === 'todo' ? tasks.filter(t => !t.done) : tasks.filter(t => t.done);
-  if (catFilter) f = f.filter(t => t.cat === catFilter);
-
-  let n = tasks.filter(t => !t.done).length;
-  let container = document.getElementById('container');
-
-  if (!f.length) {
-    container.innerHTML = '<div class="empty">空的，挺好的 🎉</div>';
-    document.getElementById('cnt').textContent = '';
-    return;
+  let counts = {};
+  for (let t of tasks) {
+    if (!isVisible(t)) continue;
+    for (let d = t.dateStart; d <= t.dateEnd; d = nextDay(d)) {
+      counts[d] = (counts[d] || 0) + 1;
+    }
   }
-
-  let groups = {};
-  for (let t of f) {
-    let key = t.dateStart;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(t);
-  }
-  let dates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 
   let html = '';
-  for (let date of dates) {
-    let items = groups[date].sort((a, b) => a.done ? 1 : -1);
-    html += `<div class="date-group">`;
-    html += `<div class="date-label">📅 ${prettyDate(date)} · ${items.length}条</div>`;
-    html += `<ul class="list">`;
-    for (let t of items) {
-      let color = catColors[t.cat] || '#bbb';
-      let range = formatRange(t);
-      html += `<li class="${t.done ? 'done' : ''}">
-        <input type="checkbox" ${t.done ? 'checked' : ''} onclick="toggle(${t.id})">
-        <span class="cat-dot" style="background:${color}" title="${t.cat}"></span>
-        <span class="txt">${t.text.replace(/</g, '&lt;')}</span>
-        <span class="range">${range}</span>
-        <button class="del" onclick="remove(${t.id})">×</button>
-      </li>`;
-    }
-    html += `</ul></div>`;
+  for (let i = firstDay - 1; i >= 0; i--) {
+    let ds = fmtDay(viewYear, viewMonth - 1, daysInPrev - i);
+    html += dayCell(daysInPrev - i, ds, 'other-month', counts[ds] || 0, todayStr);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    let ds = fmtDay(viewYear, viewMonth, d);
+    let cls = ds === todayStr ? ' today' : '';
+    html += dayCell(d, ds, cls, counts[ds] || 0, todayStr);
+  }
+  let total = firstDay + daysInMonth;
+  let rem = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let d = 1; d <= rem; d++) {
+    let ds = fmtDay(viewYear, viewMonth + 1, d);
+    html += dayCell(d, ds, 'other-month', counts[ds] || 0, todayStr);
   }
 
-  container.innerHTML = html;
-  document.getElementById('cnt').textContent = `还有${n}条没做 · ${dates.length}天`;
+  document.getElementById('daysGrid').innerHTML = html;
+  let n = tasks.filter(t => !t.done).length;
+  document.getElementById('cnt').textContent = `还有${n}条没做`;
+
+  // 即将到期：自定义预警时间内结束的未完成事项
+  let warnHours = parseFloat(localStorage.warnHours || '72'); // 默认72小时=3天
+  let warnMs = warnHours * 3600000;
+  let now = Date.now();
+  let deadline = new Date(now + warnMs).toISOString().slice(0, 16).replace('T', ' '); // "2026-07-12 14:30"
+
+  // 每个任务的截止时间：有具体时间则用 timeEnd，否则 dateEnd 当天 23:59
+  let urgent = tasks.filter(t => {
+    if (t.done || !isVisible(t)) return false;
+    let endMs;
+    if (t.timeEnd) {
+      endMs = new Date(t.dateEnd + 'T' + t.timeEnd).getTime();
+    } else {
+      endMs = new Date(t.dateEnd + 'T23:59:59').getTime();
+    }
+    return endMs >= now && endMs <= now + warnMs;
+  });
+  urgent.sort((a, b) => {
+    let aMs = a.timeEnd ? new Date(a.dateEnd + 'T' + a.timeEnd).getTime() : new Date(a.dateEnd + 'T23:59:59').getTime();
+    let bMs = b.timeEnd ? new Date(b.dateEnd + 'T' + b.timeEnd).getTime() : new Date(b.dateEnd + 'T23:59:59').getTime();
+    return aMs - bMs;
+  });
+
+  let upBlock = document.getElementById('upcomingBlock');
+
+  // 没有截止事项 → 整栏隐藏
+  if (urgent.length === 0) {
+    upBlock.classList.remove('show');
+  } else {
+    upBlock.classList.add('show');
+    let today = new Date().toISOString().slice(0, 10);
+    let listHtml = urgent.map(t => {
+      let endMs = t.timeEnd ? new Date(t.dateEnd + 'T' + t.timeEnd).getTime() : new Date(t.dateEnd + 'T23:59:59').getTime();
+      let diffMin = Math.round((endMs - now) / 60000);
+      let dl;
+      if (diffMin < 60) dl = diffMin + '分钟后';
+      else if (diffMin < 1440) dl = Math.round(diffMin / 60) + '小时后';
+      else dl = t.dateEnd === today ? '今天' + (t.timeEnd ? ' ' + t.timeEnd : '') : t.dateEnd.slice(5);
+      return `<div class="up-item">
+        <span class="up-date">${dl}</span>
+        <span class="up-text">${t.text.replace(/</g,'&lt;')}</span>
+        <span class="up-cat">${t.cat}</span>
+      </div>`;
+    }).join('');
+
+    // 恢复输入值
+    let val, unit;
+    if (warnHours >= 1) { val = warnHours; unit = '1'; }
+    else if (warnHours >= 0.0167) { val = Math.round(warnHours * 60); unit = '60'; }
+    else { val = Math.round(warnHours * 24 * 60) / 10; unit = '0.04167'; }
+    let opts = [
+      `<option value="60" ${unit==='60'?'selected':''}>分钟</option>`,
+      `<option value="1" ${unit==='1'?'selected':''}>小时</option>`,
+      `<option value="0.04167" ${unit==='0.04167'?'selected':''}>天</option>`
+    ];
+    upBlock.innerHTML = `<div class="up-header"><h4>⏰ 即将到期</h4><span class="warn-set" onclick="event.stopPropagation()">提前<input type="number" id="warnVal" value="${val}" min="1" max="999" step="1" onchange="updateWarn()"><select id="warnUnit" onchange="updateWarn()">${opts.join('')}</select></span></div>${listHtml}`;
+  }
 }
 
-refreshCatUI();
-render();
+function dayCell(dayNum, dateStr, cls, count, todayStr) {
+  let b = count > 0 ? `<span class="badge">${count}</span>` : '';
+  return `<div class="day-cell${cls ? ' ' + cls : ''}" onclick="openDayView('${dateStr}')">
+    <span class="day-num">${dayNum}</span>${b}
+  </div>`;
+}
+
+// ── 日视图 ──
+function parseTime(t) {
+  if (!t) return 0;
+  let [h, m] = t.split(':').map(Number);
+  return h + m / 60;
+}
+
+function openDayView(dateStr) {
+  selectedDate = dateStr;
+  document.getElementById('calendarView').style.display = 'none';
+  document.getElementById('dayView').classList.add('active');
+  document.getElementById('fabBtn').style.display = 'flex';
+  document.getElementById('dayTitle').textContent = '📅 ' + prettyDate(dateStr);
+
+  let dayTasks = tasks.filter(t => dateStr >= t.dateStart && dateStr <= t.dateEnd);
+  if (tab === 'todo') dayTasks = dayTasks.filter(t => !t.done);
+  else if (tab === 'done') dayTasks = dayTasks.filter(t => t.done);
+  dayTasks = dayTasks.filter(t => isVisible(t));
+  dayTasks.sort((a, b) => a.done ? 1 : -1);
+
+  // 全天事项（没写时间的） + 跨天事项
+  let allDay = dayTasks.filter(t => !t.timeStart);
+  let multiDay = dayTasks.filter(t => t.timeStart && t.dateStart !== t.dateEnd);
+  let timed = dayTasks.filter(t => t.timeStart && t.dateStart === t.dateEnd);
+  allDay = [...allDay, ...multiDay]; // 跨天也放全天区，更清楚
+  let adHtml = '';
+  if (allDay.length > 0) {
+    adHtml = '<div class="all-day-label">全天' + (multiDay.length > 0 ? ' · 跨天' : '') + '</div>' +
+      allDay.map(t => {
+        let range = (t.dateStart !== t.dateEnd) ? ` ${t.dateStart.slice(5)}~${t.dateEnd.slice(5)}` : '';
+        return `<span class="all-day-item" style="border-color:${catColors[t.cat]};color:${catColors[t.cat]};" onclick="event.stopPropagation();openTaskMenu(event,${t.id})">${t.text.replace(/</g,'&lt;')}${range}${t.done?' ✓':''}</span>`;
+      }).join('');
+  }
+  document.getElementById('allDayBlock').innerHTML = adHtml;
+
+  // 时间表：每小时48px，总高 24*48=1152px
+  let HOUR_H = 48;
+  let totalH = 24 * HOUR_H;
+
+  // 背景线
+  let bg = '';
+  for (let h = 0; h < 24; h++) {
+    bg += `<div class="tl-hr"><span class="tl-hr-label">${String(h).padStart(2,'0')}:00</span><div class="tl-hr-line"></div></div>`;
+  }
+
+  // 计算每个timed任务的色条
+  let blocks = timed.map(t => {
+    let start = parseTime(t.timeStart);
+    let end = t.timeEnd ? parseTime(t.timeEnd) : start + 1; // 默认占1小时
+    if (end <= start) end = start + 0.25; // 最小15分钟
+    return { task: t, start, end };
+  });
+
+  // 检测重叠组，分配列
+  // 按开始时间排序
+  blocks.sort((a, b) => a.start - b.start);
+
+  // 分配列：贪心算法
+  let columns = new Array(blocks.length).fill(0);
+  let maxCol = 0;
+  for (let i = 0; i < blocks.length; i++) {
+    // 找到不在block i时间段冲突的最小列
+    let col = 0;
+    let found = false;
+    while (!found) {
+      found = true;
+      for (let j = 0; j < i; j++) {
+        if (columns[j] === col && !(blocks[j].end <= blocks[i].start || blocks[j].start >= blocks[i].end)) {
+          found = false;
+          break;
+        }
+      }
+      if (!found) col++;
+    }
+    columns[i] = col;
+    if (col > maxCol) maxCol = col;
+  }
+  let totalCols = maxCol + 1;
+
+  let overlay = '';
+  if (timed.length > 0) {
+    let gap = 3; // 色条间距
+    for (let i = 0; i < blocks.length; i++) {
+      let b = blocks[i];
+      let col = columns[i];
+      let availW = 100 / totalCols;
+      let left = col * availW + gap / 2;
+      let width = availW - gap;
+      let topPx = b.start * HOUR_H + 1;
+      let heightPx = (b.end - b.start) * HOUR_H - 2;
+      let color = catColors[b.task.cat] || '#bbb';
+      let tStr = prettyTime(b.task.timeStart) + (b.task.timeEnd && b.task.timeEnd !== b.task.timeStart ? '-' + prettyTime(b.task.timeEnd) : '');
+      overlay += `<div class="task-block" style="background:${color};top:${topPx}px;height:${heightPx}px;left:${left}%;width:${width}%;" onclick="event.stopPropagation();openTaskMenu(event,${b.task.id})">
+        <span class="tb-title">${b.task.text.replace(/</g,'&lt;')}${b.task.done?' ✓':''}</span>
+        <span class="tb-time">${tStr}</span>
+      </div>`;
+    }
+    document.getElementById('timelineWrap').innerHTML =
+      `<div class="timeline-bg" style="height:${totalH}px;">${bg}</div><div class="timeline-overlay" style="height:${totalH}px;">${overlay}</div>`;
+  } else {
+    document.getElementById('timelineWrap').innerHTML = allDay.length > 0
+      ? `<div class="timeline-bg" style="height:${totalH}px;">${bg}</div><div class="timeline-overlay" style="height:${totalH}px;"></div>`
+      : '<div class="empty-tl">这天没有事项</div>';
+  }
+}
+
+function backToCalendar() {
+  document.getElementById('calendarView').style.display = '';
+  document.getElementById('dayView').classList.remove('active');
+  selectedDate = null;
+  renderCalendar();
+}
+
+// ── 月份切换 ──
+function prevMonth() { if (viewMonth === 0) { viewMonth = 11; viewYear--; } else { viewMonth--; } selectedDate = null; renderCalendar(); }
+function nextMonth() { if (viewMonth === 11) { viewMonth = 0; viewYear++; } else { viewMonth++; } selectedDate = null; renderCalendar(); }
+function goToday() { viewYear = new Date().getFullYear(); viewMonth = new Date().getMonth(); selectedDate = null; renderCalendar(); }
+
+function updateWarn() {
+  let v = parseInt(document.getElementById('warnVal').value) || 72;
+  v = Math.max(1, Math.min(999, v));
+  let unit = parseFloat(document.getElementById('warnUnit').value);
+  let warnHours = v * unit; // 转为小时
+  localStorage.warnHours = warnHours;
+  renderCalendar();
+}
+
+// ── 年月选择面板 ──
+let ymYear = viewYear;
+let ymPickMonth = viewMonth;
+function openYmPicker() { ymYear = viewYear; ymPickMonth = viewMonth; renderYmPanel(); document.getElementById('ymPicker').classList.add('show'); }
+function closeYmPicker() { document.getElementById('ymPicker').classList.remove('show'); }
+function renderYmPanel() {
+  document.getElementById('ymYearLabel').textContent = ymYear;
+  let months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  let h = '';
+  for (let i = 0; i < 12; i++) h += `<span class="${i === ymPickMonth ? 'on' : ''}" onclick="ymPickMonth=${i};renderYmPanel()">${months[i]}</span>`;
+  document.getElementById('ymMonGrid').innerHTML = h;
+}
+function confirmYmPicker() { viewYear = ymYear; viewMonth = ymPickMonth; selectedDate = null; closeYmPicker(); renderCalendar(); }
+
+refreshUI();
+renderCalendar();
 </script>
 </body>
 </html>

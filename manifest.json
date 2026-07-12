@@ -1,15 +1,15 @@
 {
   "name": "记一下",
   "short_name": "记一下",
-  "description": "日历待办 · 时间表 · 记一下省的忘",
+  "description": "日历待办 · 时间表",
   "start_url": "/my-tools/02-待办事项.html",
   "display": "standalone",
   "background_color": "#f5f0eb",
   "theme_color": "#8b7355",
-  "orientation": "portrait",
+  "id": "/my-tools/02-待办事项.html",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%238b7355' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='50' fill='white'>📋</text></svg>",
+      "src": "icon.svg",
       "sizes": "100x100",
       "type": "image/svg+xml",
       "purpose": "any"

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>串词成文 · 极简版</title>
+</head>
+<body>
+    <h3>✏️ 输入英文单词（3~10个）</h3>
+    <div>
+        <input type="text" id="wordInput" placeholder="输入单词，如 apple" maxlength="20">
+        <button id="addBtn">添加</button>
+    </div>
+    <div id="wordList" style="margin:8px 0; padding:6px; border:1px solid #ccc; min-height:30px;">
+        <span style="color:#999;">已选单词将显示在这里</span>
+    </div>
+    <div>
+        <button id="generateBtn">生成文章</button>
+        <button id="clearBtn">清空</button>
+        <span id="countDisplay" style="margin-left:12px;">0 / 10</span>
+    </div>
+    <hr>
+    <h4>📝 生成结果</h4>
+    <div id="result" style="border:1px solid #ddd; padding:12px; min-height:60px; background:#fafafa;">
+        等待生成...
+    </div>
+
+    <script>
+        // ============ 状态 ============
+        let words = [];
+
+        // ============ 模板库（5个简单模板） ============
+        const TEMPLATES = [
+            { slots: 3, text: 'The {0} and the {1} together created a {2} that inspired everyone.' },
+            { slots: 4, text: 'In the heart of the {0}, we found a {1} and a {2}, which taught us about {3}.' },
+            { slots: 5, text: 'With {0}, {1}, and a little {2}, we overcame the {3} and reached {4}.' },
+            { slots: 3, text: 'Every {0} holds a story, and every {1} carries a dream of {2}.' },
+            { slots: 4, text: 'The {0} shone over the {1}, while the {2} whispered secrets of {3}.' },
+            { slots: 6, text: 'When {0} meets {1}, magic happens. With {2} and {3}, we can conquer {4} and build a future of {5}.' }
+        ];
+        // 填充词（当单词不足时补位）
+        const FILLERS = ['wonder', 'beauty', 'courage', 'hope', 'light', 'dream', 'peace', 'joy'];
+
+        // ============ DOM 引用 ============
+        const input = document.getElementById('wordInput');
+        const addBtn = document.getElementById('addBtn');
+        const wordList = document.getElementById('wordList');
+        const generateBtn = document.getElementById('generateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const countDisplay = document.getElementById('countDisplay');
+        const resultDiv = document.getElementById('result');
+
+        // ============ 渲染单词列表 ============
+        function renderWords() {
+            if (words.length === 0) {
+                wordList.innerHTML = '<span style="color:#999;">已选单词将显示在这里</span>';
+            } else {
+                let html = '';
+                words.forEach((w, i) => {
+                    html += `<span style="display:inline-block; background:#e0e0e0; padding:2px 10px; margin:4px; border-radius:12px;">
+                                ${w} 
+                                <span style="cursor:pointer; font-weight:bold;" data-index="${i}">✕</span>
+                             </span>`;
+                });
+                wordList.innerHTML = html;
+                // 绑定删除事件
+                wordList.querySelectorAll('[data-index]').forEach(el => {
+                    el.addEventListener('click', function() {
+                        const idx = parseInt(this.dataset.index);
+                        words.splice(idx, 1);
+                        renderWords();
+                        updateCount();
+                    });
+                });
+            }
+            updateCount();
+        }
+
+        function updateCount() {
+            countDisplay.textContent = `${words.length} / 10`;
+            generateBtn.disabled = (words.length < 3 || words.length > 10);
+        }
+
+        // ============ 添加单词 ============
+        function addWord() {
+            let raw = input.value.trim();
+            if (!raw) return;
+            // 只保留字母和常见符号
+            raw = raw.replace(/[^a-zA-Z']/g, '').toLowerCase();
+            if (!raw) {
+                alert('请输入有效的英文单词');
+                return;
+            }
+            if (words.length >= 10) {
+                alert('最多只能添加10个单词');
+                return;
+            }
+            if (words.includes(raw)) {
+                alert('该单词已存在');
+                return;
+            }
+            words.push(raw);
+            input.value = '';
+            renderWords();
+        }
+
+        // ============ 清空 ============
+        function clearAll() {
+            if (words.length === 0) return;
+            if (confirm('确定清空所有单词吗？')) {
+                words = [];
+                renderWords();
+                resultDiv.textContent = '等待生成...';
+            }
+        }
+
+        // ============ 生成文章 ============
+        function generate() {
+            if (words.length < 3 || words.length > 10) {
+                alert('请选择3~10个单词');
+                return;
+            }
+
+            // 选择模板：根据单词数量匹配最接近的槽位数
+            let bestTemplate = TEMPLATES[0];
+            let minDiff = Infinity;
+            for (const t of TEMPLATES) {
+                const diff = Math.abs(t.slots - words.length);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    bestTemplate = t;
+                }
+            }
+
+            // 准备填充词：如果单词少于槽位，用FILLERS补足；如果多于槽位，截取
+            let fillWords = [...words];
+            while (fillWords.length < bestTemplate.slots) {
+                const filler = FILLERS[Math.floor(Math.random() * FILLERS.length)];
+                if (!fillWords.includes(filler)) {
+                    fillWords.push(filler);
+                }
+            }
+            if (fillWords.length > bestTemplate.slots) {
+                fillWords = fillWords.slice(0, bestTemplate.slots);
+            }
+
+            // 替换占位符 {0}, {1}, ...
+            let result = bestTemplate.text;
+            for (let i = 0; i < fillWords.length; i++) {
+                result = result.replace(new RegExp(`\\{${i}\\}`, 'g'), fillWords[i]);
+            }
+            // 处理未替换的占位符（安全兜底）
+            result = result.replace(/\{\d+\}/g, 'wonder');
+
+            // 首字母大写，加句号
+            result = result.charAt(0).toUpperCase() + result.slice(1);
+            if (!result.endsWith('.') && !result.endsWith('!') && !result.endsWith('?')) {
+                result += '.';
+            }
+
+            // 显示结果（高亮用户单词：简单加粗）
+            let display = result;
+            // 按长度降序避免部分替换
+            const sorted = [...words].sort((a, b) => b.length - a.length);
+            for (const w of sorted) {
+                const regex = new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                display = display.replace(regex, match => `<b style="background:#ffd966;">${match}</b>`);
+            }
+            resultDiv.innerHTML = display;
+        }
+
+        // ============ 事件绑定 ============
+        addBtn.addEventListener('click', addWord);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') addWord(); });
+        generateBtn.addEventListener('click', generate);
+        clearBtn.addEventListener('click', clearAll);
+
+        // ============ 初始化 ============
+        renderWords();
+    </script>
+</body>
+</html>

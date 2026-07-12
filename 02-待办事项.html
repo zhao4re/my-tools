@@ -7,18 +7,19 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "微软雅黑", sans-serif; background: #f5f0eb; display: flex; justify-content: center; padding: 40px 16px; min-height: 100vh; }
-.app { width: 500px; max-width: 95vw; }
+.app { width: 520px; max-width: 95vw; }
 h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 14px; }
-.top-bar { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+.top-bar { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
 .top-bar input[type=text] { flex: 1; padding: 7px 10px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 14px; background: #fff; outline: none; min-width: 90px; }
 .top-bar input:focus, .top-bar select:focus { border-color: #b8a088; }
-.top-bar input[type=date] { padding: 7px 6px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 12px; background: #fff; outline: none; color: #5c4a3d; }
+.top-bar input[type=date] { padding: 7px 4px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 11px; background: #fff; outline: none; color: #5c4a3d; }
+.top-bar input[type=time] { padding: 7px 2px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 11px; background: #fff; outline: none; color: #5c4a3d; width: 55px; }
 .top-bar select { padding: 7px 6px; border: 1px solid #d5c8bc; border-radius: 4px; font-size: 12px; background: #fff; outline: none; color: #5c4a3d; cursor: pointer; }
 .top-bar button { padding: 7px 12px; background: #8b7355; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; }
 .top-bar button:hover { background: #6b5a45; }
 .top-bar .small-btn { background: #fff; color: #8b7355; border: 1px solid #d5c8bc; padding: 7px 8px; font-size: 12px; }
 .top-bar .small-btn:hover { border-color: #8b7355; background: #fff; }
-.date-row { font-size: 12px; color: #999; margin-bottom: 10px; padding-left: 2px; }
+.date-row { font-size: 11px; color: #bbb; margin-bottom: 10px; padding-left: 2px; }
 .filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
 .tabs { display: flex; gap: 14px; font-size: 13px; }
 .tabs span { cursor: pointer; color: #aaa; padding-bottom: 3px; }
@@ -68,13 +69,15 @@ h1 { font-size: 22px; color: #5c4a3d; margin-bottom: 14px; }
   <div class="top-bar">
     <input type="text" id="inp" placeholder="要干嘛..." onkeydown="if(event.key==='Enter')add()">
     <input type="date" id="dateStart" title="开始日期">
-    <span style="font-size:12px;color:#bbb;align-self:center;">~</span>
+    <input type="time" id="timeStart" title="开始时间">
+    <span style="font-size:11px;color:#ccc;">~</span>
     <input type="date" id="dateEnd" title="结束日期（可不填）">
+    <input type="time" id="timeEnd" title="结束时间（可不填）">
     <select id="catInp"></select>
     <button class="small-btn" onclick="openCatMgr()" title="管理分类">+</button>
     <button onclick="add()">加</button>
   </div>
-  <div class="date-row" id="dateHint">结束日期不填等于和开始日期一样</div>
+  <div class="date-row">时间不填则全天，结束日期不填等于开始日期</div>
 
   <div class="filter-row">
     <div class="tabs">
@@ -113,7 +116,6 @@ let tasks = JSON.parse(localStorage.todo || '[]');
 let tab = 'all';
 let catFilter = '';
 
-// 随机颜色
 let spareColors = ['#e07b5a','#5a9e8f','#a07cc5','#d4a843','#5b8cc9','#c9607a','#6ea87a','#b8845c','#7b9ec7','#c98d5e'];
 
 function randomColor() {
@@ -135,14 +137,13 @@ function addCat() {
   document.getElementById('newCatName').value = '';
   saveAll();
   refreshCatUI();
-  openCatMgr(); // 刷新弹窗内容
+  openCatMgr();
 }
 
 function removeCat(name) {
-  if (['学习','生活','工作','其他'].includes(name)) return; // 四个默认分类不能删
+  if (['学习','生活','工作','其他'].includes(name)) return;
   catOrder = catOrder.filter(c => c !== name);
   delete catColors[name];
-  // 把属于这个分类的事项移到"其他"
   tasks = tasks.map(t => t.cat === name ? { ...t, cat: '其他' } : t);
   if (catFilter === name) catFilter = '';
   saveAll();
@@ -170,11 +171,8 @@ function closeCatMgr() {
 }
 
 function refreshCatUI() {
-  // 分类下拉
   let sel = document.getElementById('catInp');
   sel.innerHTML = catOrder.map(c => `<option value="${c}">${c}</option>`).join('');
-
-  // 筛选药丸
   let pills = document.getElementById('catPills');
   pills.innerHTML = '<span class="cat-pill' + (catFilter === '' ? ' on' : '') + '" onclick="filterCat(\'\')">全部类</span>' +
     catOrder.map(c => `<span class="cat-pill${catFilter === c ? ' on' : ''}" onclick="filterCat('${c}')">${c}</span>`).join('');
@@ -188,14 +186,17 @@ function add() {
   let v = document.getElementById('inp').value.trim();
   if (!v) return;
   let ds = document.getElementById('dateStart').value || new Date().toISOString().slice(0, 10);
-  let de = document.getElementById('dateEnd').value || ds; // 不填则等于开始日期
-  // 确保结束不早于开始
-  if (de < ds) { let tmp = ds; ds = de; de = tmp; }
+  let de = document.getElementById('dateEnd').value || ds;
+  let ts = document.getElementById('timeStart').value; // 空字符串 = 不填
+  let te = document.getElementById('timeEnd').value;
+  if (de < ds) { let tmp = ds; ds = de; de = tmp; ts = te; te = ts; }
   let c = document.getElementById('catInp').value || catOrder[0];
-  tasks.push({ id: Date.now(), text: v, done: false, dateStart: ds, dateEnd: de, cat: c });
+  tasks.push({ id: Date.now(), text: v, done: false, dateStart: ds, dateEnd: de, timeStart: ts, timeEnd: te, cat: c });
   document.getElementById('inp').value = '';
   document.getElementById('dateStart').value = new Date().toISOString().slice(0, 10);
   document.getElementById('dateEnd').value = '';
+  document.getElementById('timeStart').value = '';
+  document.getElementById('timeEnd').value = '';
   saveAll();
   render();
   document.getElementById('inp').focus();
@@ -235,9 +236,22 @@ function prettyDate(d) {
   return d;
 }
 
-function formatRange(ds, de) {
-  if (ds === de) return prettyDate(ds);
-  return prettyDate(ds) + ' ~ ' + prettyDate(de);
+// 格式化时间：去掉前导零，空字符串不显示
+function prettyTime(t) {
+  if (!t) return '';
+  let [h, m] = t.split(':');
+  return h + ':' + m;
+}
+
+function formatRange(t) {
+  let d = prettyDate(t.dateStart);
+  if (t.dateStart === t.dateEnd && !t.timeStart && !t.timeEnd) return d;
+  if (t.dateStart === t.dateEnd && t.timeStart && !t.timeEnd) return d + ' ' + prettyTime(t.timeStart);
+  if (t.dateStart === t.dateEnd && t.timeStart && t.timeEnd) return d + ' ' + prettyTime(t.timeStart) + '-' + prettyTime(t.timeEnd);
+  // 跨天
+  let s = d + (t.timeStart ? ' ' + prettyTime(t.timeStart) : '');
+  let e = prettyDate(t.dateEnd) + (t.timeEnd ? ' ' + prettyTime(t.timeEnd) : '');
+  return s + ' ~ ' + e;
 }
 
 function render() {
@@ -253,7 +267,6 @@ function render() {
     return;
   }
 
-  // 按开始日期分组
   let groups = {};
   for (let t of f) {
     let key = t.dateStart;
@@ -270,7 +283,7 @@ function render() {
     html += `<ul class="list">`;
     for (let t of items) {
       let color = catColors[t.cat] || '#bbb';
-      let range = formatRange(t.dateStart, t.dateEnd);
+      let range = formatRange(t);
       html += `<li class="${t.done ? 'done' : ''}">
         <input type="checkbox" ${t.done ? 'checked' : ''} onclick="toggle(${t.id})">
         <span class="cat-dot" style="background:${color}" title="${t.cat}"></span>

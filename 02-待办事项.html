@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="记一下">
 <meta name="theme-color" content="#8b7355">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%238b7355' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='50' fill='white'>📋</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%238b7355' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='50' fill='white'>📤</text></svg>">
 <script>
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').style.display='flex';});
@@ -243,8 +243,9 @@ body{font-family:"微软雅黑",sans-serif;background:#f5f0eb;display:flex;justi
 <div class="app">
   <div id="calendarView">
     <div class="top">
-      <span id="installBtn" onclick="installApp()" title="添加到桌面" style="display:none;cursor:pointer;font-size:18px;padding:4px 8px;border-radius:6px;background:#8b7355;color:#fff;">⬇️</span>
+      <span id="installBtn" onclick="exportData()" title="导出备份" style="cursor:pointer;font-size:18px;padding:4px 8px;border-radius:6px;background:#8b7355;color:#fff;">📤</span>
       <button class="theme-btn" onclick="toggleTheme()" title="深色/浅色" id="themeBtn">🌗</button>
+      <button class="theme-btn" onclick="openHelp()" title="使用说明" style="margin-right:0">❓</button>
       <h1>📋 记一下</h1>
       <div class="mon-nav"><button onclick="prevMonth()">◀</button><span class="mon-label" id="monLabel" onclick="openYmPicker()"></span><button onclick="nextMonth()">▶</button></div>
       <span class="today-btn" onclick="goToday()">今天</span>
@@ -318,7 +319,7 @@ body{font-family:"微软雅黑",sans-serif;background:#f5f0eb;display:flex;justi
 <div class="cat-sheet" id="catSheet" onclick="if(event.target===this)closeCatSheet()"><div class="sheet"><h3>显示哪些分类</h3><div id="catSheetList"></div><div class="sbtn"><button onclick="applyCatFilter()">确定</button></div></div></div>
 
 <!-- 色条操作菜单 -->
-<div class="task-menu" id="taskMenu"><div onclick="menuToggleDone()" id="menuDoneText">✓ 标记完成</div><div onclick="openEditTask()">✎ 修改</div><div class="danger" onclick="menuDelete()">✕ 删除</div></div>
+<div class="task-menu" id="taskMenu"><div onclick="menuToggleDone()" id="menuDoneText">✓ 标记完成</div><div onclick="showSubTaskMenu()" id="menuSubText">📋 子任务</div><div onclick="openEditTask()">✎ 修改</div><div onclick="menuDelete()" class="danger">✕ 删除</div></div>
 
 <!-- 修改事项弹窗 -->
 <div class="modal-bg" id="editModalBg" onclick="if(event.target===this)closeEdit()">
@@ -326,6 +327,8 @@ body{font-family:"微软雅黑",sans-serif;background:#f5f0eb;display:flex;justi
     <div class="row"><label>内容</label><input type="text" id="editInp" onkeydown="if(event.key==='Enter')saveEdit()"></div>
     <div class="row"><label>分类</label><select id="editCat"></select></div>
     <div class="row"><label>优先级</label><select id="editPri"><option value="0">无</option><option value="2">中</option><option value="3">高</option></select></div>
+    <div class="row"><label>子任务</label><div style="flex:1" id="editSubsContainer"></div></div>
+    <div class="row"><label></label><div class="sub-add-row"><input type="text" id="editSubInp" placeholder="添加子任务..." onkeydown="if(event.key==='Enter')addEditSub()"><button type="button" onclick="addEditSub()">+</button></div></div>
     <div class="row"><label>开始</label><select id="esy"></select><span style="font-size:11px;color:#bbb;">年</span><select id="esmo"></select><span style="font-size:11px;color:#bbb;">月</span><select id="esd"></select><span style="font-size:11px;color:#bbb;">日</span><select id="esh"><option value="">时</option></select><span style="font-size:12px;color:#bbb;">:</span><select id="esm"><option value="">分</option></select></div>
     <div class="row"><label>结束</label><select id="eey"></select><span style="font-size:11px;color:#bbb;">年</span><select id="eemo"></select><span style="font-size:11px;color:#bbb;">月</span><select id="eed"></select><span style="font-size:11px;color:#bbb;">日</span><select id="eeh"><option value="">时</option></select><span style="font-size:12px;color:#bbb;">:</span><select id="eem"><option value="">分</option></select></div>
     <div class="hint">时/分不选 = 全天 · 结束不填 = 同一天</div>
@@ -341,6 +344,28 @@ body{font-family:"微软雅黑",sans-serif;background:#f5f0eb;display:flex;justi
     <div class="btns"><button class="cancel" onclick="closeCdAdd()">取消</button><button class="ok" onclick="addCountdown()">添加</button></div></div>
 </div>
 
+<!-- 子任务快速查看 -->
+<div class="modal-bg" id="subModalBg" onclick="if(event.target===this)closeSubModal()">
+  <div class="modal"><h3 id="subModalTitle">子任务</h3>
+    <ul class="sub-list" id="subModalList"></ul>
+    <div class="sub-add-row"><input type="text" id="subModalInp" placeholder="加一个子任务..." onkeydown="if(event.key==='Enter')addSubModal()"><button onclick="addSubModal()">+</button></div>
+    <div class="btns" style="margin-top:10px"><button class="cancel" onclick="closeSubModal()">关</button></div>
+  </div>
+</div>
+
+<!-- 使用说明 + 安装指引 -->
+<div class="modal-bg" id="helpModalBg" onclick="if(event.target===this)closeHelp()">
+  <div class="modal" style="max-height:80vh">
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <button id="helpTabGuide" style="flex:1;padding:8px;border:none;border-radius:6px;background:#8b7355;color:#fff;cursor:pointer;font-size:13px" onclick="switchHelpTab('guide')">📖 使用说明</button>
+      <button id="helpTabInstall" style="flex:1;padding:8px;border:1px solid #d5c8bc;border-radius:6px;background:#fff;color:#8b7355;cursor:pointer;font-size:13px" onclick="switchHelpTab('install')">📲 安装到桌面</button>
+    </div>
+    <div id="helpGuideContent"></div>
+    <div id="helpInstallContent" style="display:none"></div>
+    <div class="btns"><button class="cancel" onclick="closeHelp()">关</button></div>
+  </div>
+</div>
+
 <!-- 分类管理弹窗 -->
 <div class="sm-bg" id="catModalBg" onclick="if(event.target===this)closeCatMgr()"><div class="box"><h3>管理分类</h3><div class="exist-list" id="existList"></div><input type="text" id="newCatName" placeholder="新分类名" onkeydown="if(event.key==='Enter')addCat()"><div class="mbtn"><button class="cancel" onclick="closeCatMgr()">关</button><button class="ok" onclick="addCat()">添加</button></div></div></div>
 
@@ -352,7 +377,7 @@ let tasks=JSON.parse(localStorage.todo||'[]');
 let countdowns=JSON.parse(localStorage.countdowns||'[]');
 let habits=JSON.parse(localStorage.habits||'[]');
 let moods=JSON.parse(localStorage.moods||'{}');
-let tab='all',visibleCats=null,viewYear=new Date().getFullYear(),viewMonth=new Date().getMonth(),selectedDate=null,tempSubs=[],menuTaskId=null;
+let tab='all',visibleCats=null,viewYear=new Date().getFullYear(),viewMonth=new Date().getMonth(),selectedDate=null,tempSubs=[],editSubs=[],menuTaskId=null,editTaskId=null;
 let spareColors=['#e07b5a','#5a9e8f','#a07cc5','#d4a843','#5b8cc9','#c9607a','#6ea87a','#b8845c','#7b9ec7','#c98d5e'];
 function randomColor(){return spareColors[Math.floor(Math.random()*spareColors.length)]}
 function saveAll(){localStorage.catColors=JSON.stringify(catColors);localStorage.catOrder=JSON.stringify(catOrder);localStorage.todo=JSON.stringify(tasks);localStorage.countdowns=JSON.stringify(countdowns);localStorage.habits=JSON.stringify(habits);localStorage.moods=JSON.stringify(moods)}
@@ -458,6 +483,60 @@ function toggleEditRepeat(){let m=document.getElementById('editRepeatMode').valu
 function add(){let v=document.getElementById('inp').value.trim();if(!v)return;let ds=readDate('sy','smo','sd')||new Date().toISOString().slice(0,10),de=readDate('ey','emo','ed')||ds,ts=readTime('sh','sm'),te=readTime('eh','em');if(de<ds){let tmp=ds;ds=de;de=tmp;ts=te;te=ts}let rd=parseInt(document.getElementById('repeatDays').value)||0;if(document.getElementById('repeatMode').value==='0')rd=0;let pri=parseInt(document.getElementById('priInp').value)||0;tasks.push({id:Date.now(),text:v,done:false,dateStart:ds,dateEnd:de,timeStart:ts,timeEnd:te,cat:document.getElementById('catInp').value||catOrder[0],repeatDays:rd,priority:pri,subs:[...tempSubs]});saveAll();closeAdd();tempSubs=[];let newTask=tasks[tasks.length-1];scheduleNotif(newTask);if(document.getElementById('dayView').classList.contains('active'))openDayView(selectedDate);else renderCalendar()}
 function toggle(id){let t=tasks.find(t=>t.id===id);if(!t)return;let wasDone=t.done;tasks=tasks.map(t=>t.id===id?{...t,done:!t.done}:t);if(!wasDone&&t.repeatDays>0){let ns=new Date(t.dateStart);ns.setDate(ns.getDate()+t.repeatDays);let ne=new Date(t.dateEnd);ne.setDate(ne.getDate()+t.repeatDays);let newTask={id:Date.now(),text:t.text,done:false,dateStart:ns.toISOString().slice(0,10),dateEnd:ne.toISOString().slice(0,10),timeStart:t.timeStart,timeEnd:t.timeEnd,cat:t.cat,repeatDays:t.repeatDays,priority:t.priority,subs:t.subs?t.subs.map(s=>({...s,done:false})):[]};tasks.push(newTask);scheduleNotif(newTask)};saveAll();refreshViews()}
 function remove(id){tasks=tasks.filter(t=>t.id!==id);saveAll();refreshViews()}
+// ── 使用说明 + 安装指引 ──
+function openHelp(){switchHelpTab('guide');document.getElementById('helpModalBg').classList.add('show')}
+function closeHelp(){document.getElementById('helpModalBg').classList.remove('show')}
+function switchHelpTab(tab){
+  document.getElementById('helpTabGuide').style.background=tab==='guide'?'#8b7355':'#fff';document.getElementById('helpTabGuide').style.color=tab==='guide'?'#fff':'#8b7355';document.getElementById('helpTabGuide').style.border=tab==='guide'?'none':'1px solid #d5c8bc';
+  document.getElementById('helpTabInstall').style.background=tab==='install'?'#8b7355':'#fff';document.getElementById('helpTabInstall').style.color=tab==='install'?'#fff':'#8b7355';document.getElementById('helpTabInstall').style.border=tab==='install'?'none':'1px solid #d5c8bc';
+  document.getElementById('helpGuideContent').style.display=tab==='guide'?'':'none';
+  document.getElementById('helpInstallContent').style.display=tab==='install'?'':'none';
+  if(tab==='guide')renderHelpGuide();if(tab==='install')renderInstallGuide();
+}
+function renderHelpGuide(){
+  document.getElementById('helpGuideContent').innerHTML=`
+    <div style="font-size:14px;line-height:2">
+      <p><b>📅 日历</b> — 主页面，点日期看当天安排</p>
+      <p><b>➕ 加号按钮</b> — 添加新事项，可设时间/优先级/重复/子任务</p>
+      <p><b>📋 子任务</b> — 点事项→菜单→子任务，弹窗直接加和勾</p>
+      <p><b>🕐 时间段</b> — 填了时间的显示为色条，重叠自动分列</p>
+      <p><b>🔁 重复</b> — 勾掉周期性任务自动生成下一次</p>
+      <p><b>⏰ 倒计时</b> — 日历上方横向卡片，点+添加</p>
+      <p><b>😊 心情</b> — 右键日历格子选表情</p>
+      <p><b>🎯 专注</b> — 日视图右上角，全屏番茄钟</p>
+      <p><b>✅ 习惯打卡</b> — 顶栏按钮，独立于待办</p>
+      <p><b>📤 导出</b> — 事项管理里有备份按钮</p>
+      <p style="color:#999;margin-top:8px">点事项 → 弹出菜单 → 标记完成/子任务/修改/删除</p>
+    </div>`;
+}
+function renderInstallGuide(){
+  document.getElementById('helpInstallContent').innerHTML=`
+    <div style="font-size:14px;line-height:2">
+      <p style="font-weight:bold;color:#8b7355;border-bottom:1px solid #eee;padding-bottom:4px">📱 手机端</p>
+      <p><b>iPhone / iPad：</b></p>
+      <p>1. 用 <b>Safari</b> 打开（微信/QQ内置浏览器不行）</p>
+      <p>2. 点底部 <b>分享按钮</b>（方框箭头）→ <b>"添加到主屏幕"</b></p>
+      <p>3. 点右上角"添加"，桌面出现图标</p>
+      <p><b>安卓手机：</b></p>
+      <p>1. 用 <b>Chrome</b> 或 <b>Edge</b> 打开</p>
+      <p>2. 地址栏下方弹出 <b>"添加到主屏幕"</b>，或点右上角 ⋮ → <b>"安装应用"</b></p>
+      <p style="color:#999">部分国产浏览器（UC/QQ/百度）不支持，换Chrome即可</p>
+
+      <p style="font-weight:bold;color:#8b7355;border-bottom:1px solid #eee;padding-bottom:4px;margin-top:16px">💻 电脑端</p>
+      <p><b>Edge：</b>点右上角 ⋯ → 应用 → 安装此站点作为应用</p>
+      <p><b>Chrome：</b>点右上角 ⋮ → 更多工具 → 创建快捷方式 → 勾选"在窗口中打开"</p>
+      <p style="color:#999">装完开始菜单搜"记一下"，打开跟程序一样</p>
+
+      <p style="color:#c0392b;margin-top:12px">⚠️ 微信/QQ直接打开不支持安装，请复制链接到浏览器打开</p>
+    </div>`;
+}
+
+function toggleSub(taskId,subIdx){let t=tasks.find(t=>t.id===taskId);if(!t||!t.subs)return;t.subs[subIdx].done=!t.subs[subIdx].done;saveAll();if(document.getElementById('subModalBg').classList.contains('show'))renderSubModal(taskId);else refreshViews()}
+let subModalTaskId=null;
+function showSubTaskMenu(){let id=menuTaskId;if(id===null)return;closeTaskMenu();subModalTaskId=id;renderSubModal(id);document.getElementById('subModalBg').classList.add('show')}
+function renderSubModal(id){let t=tasks.find(x=>x.id===id);if(!t)return;document.getElementById('subModalTitle').textContent='📋 '+t.text;let subs=t.subs||[];document.getElementById('subModalList').innerHTML=subs.length?subs.map((s,i)=>`<li class="${s.done?'done':''}"><input type="checkbox" ${s.done?'checked':''} onclick="toggleSub(${id},${i})"><span class="sub-txt">${s.text.replace(/</g,'&lt;')}</span><button style="background:none;border:none;color:#ddd;cursor:pointer;font-size:14px" onclick="event.stopPropagation();let tt=tasks.find(x=>x.id===${id});tt.subs.splice(${i},1);saveAll();renderSubModal(${id});refreshViews()">×</button></li>`).join(''):'<li style="color:#ccc;font-size:13px">暂无子任务</li>'}
+function addSubModal(){let id=subModalTaskId;if(id===null)return;let v=document.getElementById('subModalInp').value.trim();if(!v)return;let t=tasks.find(x=>x.id===id);if(!t)t.subs=[];t.subs.push({text:v,done:false});document.getElementById('subModalInp').value='';saveAll();renderSubModal(id);refreshViews()}
+function closeSubModal(){document.getElementById('subModalBg').classList.remove('show');subModalTaskId=null;refreshViews()}
 function refreshViews(){if(document.getElementById('dayView').classList.contains('active'))openDayView(selectedDate);else if(document.getElementById('mgrView').classList.contains('active')){renderManager();renderStats()}else if(document.getElementById('habitsView').classList.contains('active'))renderHabits();else renderCalendar()}
 
 // ── 色条操作菜单 ──
@@ -467,9 +546,13 @@ function menuToggleDone(){if(menuTaskId!==null)toggle(menuTaskId);closeTaskMenu(
 function menuDelete(){if(menuTaskId!==null)remove(menuTaskId);closeTaskMenu()}
 
 // ── 修改事项 ──
-function openEditTask(){let id=menuTaskId;if(id===null)return;closeTaskMenu();let t=tasks.find(x=>x.id===id);if(!t)return;menuTaskId=id;document.getElementById('editInp').value=t.text;document.getElementById('editPri').value=t.priority||0;setDate('esy','esmo','esd',t.dateStart);setDate('eey','eemo','eed',t.dateEnd===t.dateStart?'':t.dateEnd);setTime('esh','esm',t.timeStart);setTime('eeh','eem',t.timeEnd);document.getElementById('editCat').innerHTML=catOrder.map(c=>`<option value="${c}" ${c===t.cat?'selected':''}>${c}</option>`).join('');let rd=t.repeatDays||0;if(rd===7){document.getElementById('editRepeatMode').value='7';document.getElementById('editRepeatDays').style.display='none'}else if(rd===30){document.getElementById('editRepeatMode').value='30';document.getElementById('editRepeatDays').style.display='none'}else if(rd>0){document.getElementById('editRepeatMode').value='1';document.getElementById('editRepeatDays').style.display='';document.getElementById('editRepeatDays').value=rd}else{document.getElementById('editRepeatMode').value='0';document.getElementById('editRepeatDays').style.display='none'};document.getElementById('editModalBg').classList.add('show')}
-function closeEdit(){document.getElementById('editModalBg').classList.remove('show');menuTaskId=null}
-function saveEdit(){let id=menuTaskId;if(id===null)return;let v=document.getElementById('editInp').value.trim();if(!v)return;let ds=readDate('esy','esmo','esd'),de=readDate('eey','eemo','eed')||ds,ts=readTime('esh','esm'),te=readTime('eeh','eem');if(de<ds){let tmp=ds;ds=de;de=tmp;ts=te;te=ts}let c=document.getElementById('editCat').value,pri=parseInt(document.getElementById('editPri').value)||0,erd=parseInt(document.getElementById('editRepeatDays').value)||0;if(document.getElementById('editRepeatMode').value==='0')erd=0;tasks=tasks.map(t=>t.id===id?{...t,text:v,dateStart:ds,dateEnd:de,timeStart:ts,timeEnd:te,cat:c,repeatDays:erd,priority:pri}:t);saveAll();closeEdit();refreshViews()}
+function openEditTask(){let id=menuTaskId;if(id===null)return;closeTaskMenu();let t=tasks.find(x=>x.id===id);if(!t)return;menuTaskId=id;document.getElementById('editInp').value=t.text;document.getElementById('editPri').value=t.priority||0;setDate('esy','esmo','esd',t.dateStart);setDate('eey','eemo','eed',t.dateEnd===t.dateStart?'':t.dateEnd);setTime('esh','esm',t.timeStart);setTime('eeh','eem',t.timeEnd);document.getElementById('editCat').innerHTML=catOrder.map(c=>`<option value="${c}" ${c===t.cat?'selected':''}>${c}</option>`).join('');let rd=t.repeatDays||0;if(rd===7){document.getElementById('editRepeatMode').value='7';document.getElementById('editRepeatDays').style.display='none'}else if(rd===30){document.getElementById('editRepeatMode').value='30';document.getElementById('editRepeatDays').style.display='none'}else if(rd>0){document.getElementById('editRepeatMode').value='1';document.getElementById('editRepeatDays').style.display='';document.getElementById('editRepeatDays').value=rd}else{document.getElementById('editRepeatMode').value='0';document.getElementById('editRepeatDays').style.display='none'};editSubs=t.subs?t.subs.map(s=>({...s})):[];renderEditSubs();document.getElementById('editModalBg').classList.add('show')}
+function closeEdit(){document.getElementById('editModalBg').classList.remove('show');menuTaskId=null;editTaskId=null}
+function addEditSub(){let v=document.getElementById('editSubInp').value.trim();if(!v)return;editSubs.push({text:v,done:false});document.getElementById('editSubInp').value='';renderEditSubs()}
+function removeEditSub(i){editSubs.splice(i,1);renderEditSubs()}
+function toggleEditSub(i){editSubs[i].done=!editSubs[i].done;renderEditSubs()}
+function renderEditSubs(){document.getElementById('editSubsContainer').innerHTML='<ul class="sub-list">'+editSubs.map((s,i)=>`<li class="${s.done?'done':''}"><input type="checkbox" ${s.done?'checked':''} onclick="toggleEditSub(${i})"><span class="sub-txt">${s.text.replace(/</g,'&lt;')}</span><button style="background:none;border:none;color:#ddd;cursor:pointer;font-size:14px" onclick="removeEditSub(${i})">×</button></li>`).join('')+'</ul>'}
+function saveEdit(){let id=menuTaskId;if(id===null)return;let v=document.getElementById('editInp').value.trim();if(!v)return;let ds=readDate('esy','esmo','esd'),de=readDate('eey','eemo','eed')||ds,ts=readTime('esh','esm'),te=readTime('eeh','eem');if(de<ds){let tmp=ds;ds=de;de=tmp;ts=te;te=ts}let c=document.getElementById('editCat').value,pri=parseInt(document.getElementById('editPri').value)||0,erd=parseInt(document.getElementById('editRepeatDays').value)||0;if(document.getElementById('editRepeatMode').value==='0')erd=0;tasks=tasks.map(t=>t.id===id?{...t,text:v,dateStart:ds,dateEnd:de,timeStart:ts,timeEnd:te,cat:c,repeatDays:erd,priority:pri,subs:[...editSubs]}:t);saveAll();closeEdit();refreshViews()}
 
 // ── 日期工具 ──
 function prettyDate(d){let t=new Date().toISOString().slice(0,10),tm=new Date(Date.now()+86400000).toISOString().slice(0,10),y=new Date(Date.now()-86400000).toISOString().slice(0,10);if(d===t)return'今天';if(d===tm)return'明天';if(d===y)return'昨天';return d}
